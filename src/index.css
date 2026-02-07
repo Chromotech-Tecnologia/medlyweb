@@ -2,95 +2,149 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Medly Design System - Medical Green Theme with Glassmorphism */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Medical Green Theme */
+    --background: 150 30% 98%;
+    --foreground: 160 30% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 160 30% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 160 30% 10%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary - Medical Green #A8E6CF */
+    --primary: 150 56% 78%;
+    --primary-foreground: 160 40% 15%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Secondary - Light Cyan #E0F7FA */
+    --secondary: 180 60% 93%;
+    --secondary-foreground: 160 40% 15%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 150 20% 94%;
+    --muted-foreground: 160 15% 45%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Accent - Teal */
+    --accent: 160 50% 85%;
+    --accent-foreground: 160 40% 15%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    /* Success - Deep Green */
+    --success: 145 65% 42%;
+    --success-foreground: 0 0% 100%;
 
-    --radius: 0.5rem;
+    /* Warning - Amber */
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
 
-    --sidebar-background: 0 0% 98%;
+    /* Info - Sky Blue */
+    --info: 199 89% 48%;
+    --info-foreground: 0 0% 100%;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    --border: 150 20% 85%;
+    --input: 150 20% 85%;
+    --ring: 150 56% 60%;
 
-    --sidebar-primary: 240 5.9% 10%;
+    --radius: 0.75rem;
 
-    --sidebar-primary-foreground: 0 0% 98%;
+    /* Sidebar - Lighter green */
+    --sidebar-background: 150 40% 97%;
+    --sidebar-foreground: 160 30% 25%;
+    --sidebar-primary: 150 56% 78%;
+    --sidebar-primary-foreground: 160 40% 15%;
+    --sidebar-accent: 150 35% 92%;
+    --sidebar-accent-foreground: 160 30% 20%;
+    --sidebar-border: 150 25% 88%;
+    --sidebar-ring: 150 56% 60%;
 
-    --sidebar-accent: 240 4.8% 95.9%;
+    /* Glassmorphism */
+    --glass-bg: 150 30% 98% / 0.85;
+    --glass-border: 150 30% 90% / 0.5;
+    --glass-blur: 10px;
 
-    --sidebar-accent-foreground: 240 5.9% 10%;
+    /* Shadows */
+    --shadow-soft: 0 4px 20px -4px hsl(150 30% 20% / 0.08);
+    --shadow-glow: 0 0 20px -5px hsl(150 56% 78% / 0.4);
+    --shadow-card: 0 2px 12px -2px hsl(150 30% 20% / 0.06);
 
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Chart colors */
+    --chart-1: 150 56% 78%;
+    --chart-2: 180 60% 75%;
+    --chart-3: 160 50% 70%;
+    --chart-4: 140 45% 65%;
+    --chart-5: 170 55% 60%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 160 25% 8%;
+    --foreground: 150 20% 95%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 160 20% 12%;
+    --card-foreground: 150 20% 95%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 160 20% 12%;
+    --popover-foreground: 150 20% 95%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    /* Primary - Medical Green (adjusted for dark) */
+    --primary: 150 50% 65%;
+    --primary-foreground: 160 30% 10%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    /* Secondary */
+    --secondary: 160 25% 18%;
+    --secondary-foreground: 150 20% 90%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 160 20% 18%;
+    --muted-foreground: 150 15% 60%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 160 30% 22%;
+    --accent-foreground: 150 20% 90%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 70% 45%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --success: 145 55% 50%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 85% 55%;
+    --warning-foreground: 0 0% 0%;
+
+    --info: 199 80% 55%;
+    --info-foreground: 0 0% 100%;
+
+    --border: 160 20% 20%;
+    --input: 160 20% 20%;
+    --ring: 150 50% 50%;
+
+    /* Sidebar Dark */
+    --sidebar-background: 160 25% 10%;
+    --sidebar-foreground: 150 20% 90%;
+    --sidebar-primary: 150 50% 65%;
+    --sidebar-primary-foreground: 160 30% 10%;
+    --sidebar-accent: 160 25% 15%;
+    --sidebar-accent-foreground: 150 20% 90%;
+    --sidebar-border: 160 20% 18%;
+    --sidebar-ring: 150 50% 50%;
+
+    /* Glassmorphism Dark */
+    --glass-bg: 160 25% 12% / 0.9;
+    --glass-border: 160 20% 25% / 0.5;
+
+    /* Shadows Dark */
+    --shadow-soft: 0 4px 20px -4px hsl(0 0% 0% / 0.3);
+    --shadow-glow: 0 0 20px -5px hsl(150 50% 65% / 0.3);
+    --shadow-card: 0 2px 12px -2px hsl(0 0% 0% / 0.2);
+
+    /* Chart colors dark */
+    --chart-1: 150 50% 65%;
+    --chart-2: 180 50% 60%;
+    --chart-3: 160 45% 55%;
+    --chart-4: 140 40% 50%;
+    --chart-5: 170 50% 50%;
   }
 }
 
@@ -100,6 +154,106 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  /* Glassmorphism Card */
+  .glass-card {
+    @apply rounded-xl border;
+    background: hsl(var(--glass-bg));
+    border-color: hsl(var(--glass-border));
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    box-shadow: var(--shadow-card);
+  }
+
+  /* Glow effect on hover */
+  .glow-hover {
+    @apply transition-all duration-300;
+  }
+  .glow-hover:hover {
+    box-shadow: var(--shadow-glow);
+  }
+
+  /* Soft shadow utility */
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
+  }
+
+  /* Medical gradient backgrounds */
+  .bg-gradient-medical {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%);
+  }
+
+  .bg-gradient-medical-subtle {
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.1) 0%, hsl(var(--secondary) / 0.2) 100%);
+  }
+
+  /* Status badges */
+  .badge-success {
+    @apply bg-success/15 text-success border-success/30;
+  }
+
+  .badge-warning {
+    @apply bg-warning/15 text-warning border-warning/30;
+  }
+
+  .badge-info {
+    @apply bg-info/15 text-info border-info/30;
+  }
+
+  .badge-destructive {
+    @apply bg-destructive/15 text-destructive border-destructive/30;
+  }
+
+  /* Animated underline for links */
+  .link-underline {
+    @apply relative;
+  }
+  .link-underline::after {
+    content: '';
+    @apply absolute bottom-0 left-0 h-0.5 w-0 bg-primary transition-all duration-300;
+  }
+  .link-underline:hover::after {
+    @apply w-full;
+  }
+}
+
+@layer utilities {
+  /* Custom scrollbar */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply rounded-full;
+    background: hsl(var(--muted-foreground) / 0.3);
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.5);
+  }
+
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 }
