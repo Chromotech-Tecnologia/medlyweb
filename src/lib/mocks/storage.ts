@@ -78,7 +78,7 @@ export function getAll<T extends BaseEntity>(key: string, includeDeleted = false
   return includeDeleted ? items : items.filter(item => !item.deletedAt);
 }
 
-export function create<T extends BaseEntity>(key: string, item: Omit<T, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>): T {
+export function create<T extends BaseEntity>(key: string, item: Record<string, unknown>): T {
   const items = getFromStorage<T>(key);
   const now = new Date().toISOString();
   const newItem = {
@@ -93,7 +93,7 @@ export function create<T extends BaseEntity>(key: string, item: Omit<T, 'id' | '
   return newItem;
 }
 
-export function update<T extends BaseEntity>(key: string, id: string, updates: Partial<T>): T | undefined {
+export function update<T extends BaseEntity>(key: string, id: string, updates: Record<string, unknown>): T | undefined {
   const items = getFromStorage<T>(key);
   const index = items.findIndex(item => item.id === id);
   if (index === -1) return undefined;
@@ -102,7 +102,7 @@ export function update<T extends BaseEntity>(key: string, id: string, updates: P
     ...items[index],
     ...updates,
     updatedAt: new Date().toISOString(),
-  };
+  } as T;
   items[index] = updatedItem;
   setToStorage(key, items);
   return updatedItem;
