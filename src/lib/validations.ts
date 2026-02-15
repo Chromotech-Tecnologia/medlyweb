@@ -169,6 +169,28 @@ export const scaleSchema = z.object({
 
 export type ScaleFormData = z.infer<typeof scaleSchema>;
 
+// Document Schema
+export const documentSchema = z.object({
+  name: z.string().min(1, 'Nome é obrigatório').max(200),
+  category: z.enum(['identidade', 'crm', 'diploma', 'comprovante', 'contrato', 'outro']),
+  userId: z.string().min(1, 'Usuário é obrigatório'),
+  expirationDate: z.string().optional(),
+  reviewNotes: z.string().max(500).optional(),
+});
+
+export type DocumentFormData = z.infer<typeof documentSchema>;
+
+// Payment Schema
+export const paymentSchema = z.object({
+  scaleId: z.string().min(1, 'Escala é obrigatória'),
+  doctorId: z.string().min(1, 'Médico é obrigatório'),
+  amount: z.number().min(0, 'Valor deve ser positivo'),
+  dueDate: z.string().min(1, 'Data de vencimento é obrigatória'),
+  notes: z.string().max(500).optional(),
+});
+
+export type PaymentFormData = z.infer<typeof paymentSchema>;
+
 // Rating Schema
 export const ratingSchema = z.object({
   overallScore: z.number().min(1).max(5),
