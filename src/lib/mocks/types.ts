@@ -62,10 +62,27 @@ export interface Permission {
   create: boolean;
   edit: boolean;
   delete: boolean;
+  viewAll: boolean; // true = ver todos os dados, false = apenas dados relacionados ao usuário
+}
+
+export interface DashboardPermission {
+  view: boolean;
+  viewAll: boolean;
+  cards: {
+    totalUsers: boolean;
+    activeScales: boolean;
+    pendingPayments: boolean;
+    occupancyRate: boolean;
+  };
+  charts: {
+    usersByRole: boolean;
+    scalesTrend: boolean;
+    locationRatings: boolean;
+  };
 }
 
 export interface ProfilePermissions {
-  dashboard: Permission;
+  dashboard: DashboardPermission;
   users: Permission;
   scales: Permission;
   locations: Permission;
