@@ -377,7 +377,7 @@ export default function Profiles() {
                       </TableHeader>
                       <TableBody>
                         {(Object.keys(moduleLabels) as (keyof typeof moduleLabels)[]).map(mod => {
-                          const perm = selectedProfile.permissions[mod] as Permission;
+                          const perm = (selectedProfile.permissions?.[mod] ?? { view: false, create: false, edit: false, delete: false, viewAll: false }) as Permission;
                           return (
                             <TableRow key={mod}>
                               <TableCell className="font-medium">{moduleLabels[mod].label}</TableCell>
@@ -393,14 +393,14 @@ export default function Profiles() {
                 <div>
                   <h4 className="font-semibold mb-2">Dashboard</h4>
                   <div className="grid gap-2 text-sm">
-                    <div className="flex justify-between border-b pb-1"><span>Visualizar</span><PermBadge enabled={selectedProfile.permissions.dashboard.view} /></div>
-                    <div className="flex justify-between border-b pb-1"><span>Ver Tudo</span><PermBadge enabled={selectedProfile.permissions.dashboard.viewAll} /></div>
+                    <div className="flex justify-between border-b pb-1"><span>Visualizar</span><PermBadge enabled={selectedProfile.permissions?.dashboard?.view ?? false} /></div>
+                    <div className="flex justify-between border-b pb-1"><span>Ver Tudo</span><PermBadge enabled={selectedProfile.permissions?.dashboard?.viewAll ?? false} /></div>
                     <h5 className="font-medium mt-2">Cards</h5>
-                    {Object.entries(selectedProfile.permissions.dashboard.cards).map(([k, v]) => (
+                    {selectedProfile.permissions?.dashboard?.cards && Object.entries(selectedProfile.permissions.dashboard.cards).map(([k, v]) => (
                       <div key={k} className="flex justify-between"><span>{cardLabels[k]}</span><PermBadge enabled={v} /></div>
                     ))}
                     <h5 className="font-medium mt-2">Gráficos</h5>
-                    {Object.entries(selectedProfile.permissions.dashboard.charts).map(([k, v]) => (
+                    {selectedProfile.permissions?.dashboard?.charts && Object.entries(selectedProfile.permissions.dashboard.charts).map(([k, v]) => (
                       <div key={k} className="flex justify-between"><span>{chartLabels[k]}</span><PermBadge enabled={v} /></div>
                     ))}
                   </div>
