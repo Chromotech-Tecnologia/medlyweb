@@ -146,11 +146,11 @@ export default function Profiles() {
   const countPermissions = (p: RoleProfile) => {
     let total = 0;
     const modules = ['users', 'scales', 'locations', 'payments', 'documents', 'reports', 'settings'] as const;
-    modules.forEach(m => { permActions.forEach(a => { if ((p.permissions[m] as Permission)[a]) total++; }); });
-    if (p.permissions.dashboard.view) total++;
-    if (p.permissions.dashboard.viewAll) total++;
-    Object.values(p.permissions.dashboard.cards).forEach(v => { if (v) total++; });
-    Object.values(p.permissions.dashboard.charts).forEach(v => { if (v) total++; });
+    modules.forEach(m => { const perm = p.permissions?.[m] as Permission | undefined; if (perm) { permActions.forEach(a => { if (perm[a]) total++; }); } });
+    if (p.permissions?.dashboard?.view) total++;
+    if (p.permissions?.dashboard?.viewAll) total++;
+    if (p.permissions?.dashboard?.cards) { Object.values(p.permissions.dashboard.cards).forEach(v => { if (v) total++; }); }
+    if (p.permissions?.dashboard?.charts) { Object.values(p.permissions.dashboard.charts).forEach(v => { if (v) total++; }); }
     return total;
   };
 
