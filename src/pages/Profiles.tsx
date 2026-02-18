@@ -71,7 +71,17 @@ export default function Profiles() {
   const { toast } = useToast();
 
   useEffect(() => { initializeStorage(); loadData(); }, []);
-  const loadData = () => setProfiles(getAll<RoleProfile>(STORAGE_KEYS.ROLE_PROFILES));
+  const loadData = () => {
+    const data = getAll<RoleProfile>(STORAGE_KEYS.ROLE_PROFILES);
+    // Ensure all profiles have complete dashboard permissions structure
+    data.forEach(p => {
+      if (!p.permissions) p.permissions = {} as ProfilePermissions;
+      if (!p.permissions.dashboard) p.permissions.dashboard = emptyDashboard();
+      if (!p.permissions.dashboard.cards) p.permissions.dashboard.cards = { totalUsers: false, activeScales: false, pendingPayments: false, occupancyRate: false };
+      if (!p.permissions.dashboard.charts) p.permissions.dashboard.charts = { usersByRole: false, scalesTrend: false, locationRatings: false };
+    });
+    setProfiles(data);
+  };
 
   const openDialog = (profile?: RoleProfile) => {
     if (profile) {
@@ -79,7 +89,11 @@ export default function Profiles() {
       setFormName(profile.name);
       setFormRole(profile.role);
       setFormDescription(profile.description);
-      setFormPermissions(JSON.parse(JSON.stringify(profile.permissions)));
+      const perms = JSON.parse(JSON.stringify(profile.permissions));
+      if (!perms.dashboard) perms.dashboard = emptyDashboard();
+      if (!perms.dashboard.cards) perms.dashboard.cards = { totalUsers: false, activeScales: false, pendingPayments: false, occupancyRate: false };
+      if (!perms.dashboard.charts) perms.dashboard.charts = { usersByRole: false, scalesTrend: false, locationRatings: false };
+      setFormPermissions(perms);
     } else {
       setEditingProfile(null);
       setFormName('');
