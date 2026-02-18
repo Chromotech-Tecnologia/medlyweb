@@ -14,6 +14,7 @@ import {
   Stethoscope,
   ClipboardList,
   BarChart3,
+  Shield,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/' },
   { icon: Users, label: 'Usuários', href: '/usuarios' },
+  { icon: Shield, label: 'Perfis', href: '/perfis' },
   { icon: Calendar, label: 'Escalas', href: '/escalas' },
   { icon: MapPin, label: 'Locais', href: '/locais' },
   { icon: Stethoscope, label: 'Especialidades', href: '/especialidades' },

@@ -120,6 +120,16 @@ export const mockUsers: UserProfile[] = [
   },
 ];
 
+// Helper to create full permission
+const fullPerm = (): { view: boolean; create: boolean; edit: boolean; delete: boolean; viewAll: boolean } => ({ view: true, create: true, edit: true, delete: true, viewAll: true });
+const readOnlyPerm = (viewAll = false): { view: boolean; create: boolean; edit: boolean; delete: boolean; viewAll: boolean } => ({ view: true, create: false, edit: false, delete: false, viewAll });
+const noPerm = (): { view: boolean; create: boolean; edit: boolean; delete: boolean; viewAll: boolean } => ({ view: false, create: false, edit: false, delete: false, viewAll: false });
+const fullDash = (): { view: boolean; viewAll: boolean; cards: { totalUsers: boolean; activeScales: boolean; pendingPayments: boolean; occupancyRate: boolean }; charts: { usersByRole: boolean; scalesTrend: boolean; locationRatings: boolean } } => ({
+  view: true, viewAll: true,
+  cards: { totalUsers: true, activeScales: true, pendingPayments: true, occupancyRate: true },
+  charts: { usersByRole: true, scalesTrend: true, locationRatings: true },
+});
+
 // Mock Role Profiles
 export const mockRoleProfiles: RoleProfile[] = [
   {
@@ -128,14 +138,14 @@ export const mockRoleProfiles: RoleProfile[] = [
     role: 'admin',
     description: 'Acesso total ao sistema',
     permissions: {
-      dashboard: { view: true, create: true, edit: true, delete: true },
-      users: { view: true, create: true, edit: true, delete: true },
-      scales: { view: true, create: true, edit: true, delete: true },
-      locations: { view: true, create: true, edit: true, delete: true },
-      payments: { view: true, create: true, edit: true, delete: true },
-      documents: { view: true, create: true, edit: true, delete: true },
-      reports: { view: true, create: true, edit: true, delete: true },
-      settings: { view: true, create: true, edit: true, delete: true },
+      dashboard: fullDash(),
+      users: fullPerm(),
+      scales: fullPerm(),
+      locations: fullPerm(),
+      payments: fullPerm(),
+      documents: fullPerm(),
+      reports: fullPerm(),
+      settings: fullPerm(),
     },
     createdAt: lastWeek,
     updatedAt: now,
@@ -147,14 +157,14 @@ export const mockRoleProfiles: RoleProfile[] = [
     role: 'gestor',
     description: 'Gerencia equipes e escalas',
     permissions: {
-      dashboard: { view: true, create: false, edit: false, delete: false },
-      users: { view: true, create: true, edit: true, delete: false },
-      scales: { view: true, create: true, edit: true, delete: true },
-      locations: { view: true, create: false, edit: false, delete: false },
-      payments: { view: true, create: true, edit: true, delete: false },
-      documents: { view: true, create: false, edit: true, delete: false },
-      reports: { view: true, create: true, edit: false, delete: false },
-      settings: { view: false, create: false, edit: false, delete: false },
+      dashboard: { view: true, viewAll: true, cards: { totalUsers: true, activeScales: true, pendingPayments: true, occupancyRate: false }, charts: { usersByRole: true, scalesTrend: true, locationRatings: true } },
+      users: { view: true, create: true, edit: true, delete: false, viewAll: false },
+      scales: { view: true, create: true, edit: true, delete: true, viewAll: false },
+      locations: readOnlyPerm(false),
+      payments: { view: true, create: true, edit: true, delete: false, viewAll: false },
+      documents: { view: true, create: false, edit: true, delete: false, viewAll: false },
+      reports: { view: true, create: true, edit: false, delete: false, viewAll: false },
+      settings: noPerm(),
     },
     createdAt: lastWeek,
     updatedAt: now,
@@ -166,14 +176,14 @@ export const mockRoleProfiles: RoleProfile[] = [
     role: 'escalista',
     description: 'Gerencia escalas e candidaturas',
     permissions: {
-      dashboard: { view: true, create: false, edit: false, delete: false },
-      users: { view: true, create: false, edit: false, delete: false },
-      scales: { view: true, create: true, edit: true, delete: false },
-      locations: { view: true, create: false, edit: false, delete: false },
-      payments: { view: true, create: false, edit: false, delete: false },
-      documents: { view: true, create: false, edit: false, delete: false },
-      reports: { view: true, create: false, edit: false, delete: false },
-      settings: { view: false, create: false, edit: false, delete: false },
+      dashboard: { view: true, viewAll: false, cards: { totalUsers: false, activeScales: true, pendingPayments: false, occupancyRate: true }, charts: { usersByRole: false, scalesTrend: true, locationRatings: true } },
+      users: readOnlyPerm(false),
+      scales: { view: true, create: true, edit: true, delete: false, viewAll: false },
+      locations: readOnlyPerm(false),
+      payments: readOnlyPerm(false),
+      documents: readOnlyPerm(false),
+      reports: readOnlyPerm(false),
+      settings: noPerm(),
     },
     createdAt: lastWeek,
     updatedAt: now,
@@ -185,14 +195,14 @@ export const mockRoleProfiles: RoleProfile[] = [
     role: 'medico',
     description: 'Visualiza e candidata-se a escalas',
     permissions: {
-      dashboard: { view: true, create: false, edit: false, delete: false },
-      users: { view: false, create: false, edit: false, delete: false },
-      scales: { view: true, create: false, edit: false, delete: false },
-      locations: { view: true, create: false, edit: false, delete: false },
-      payments: { view: true, create: false, edit: false, delete: false },
-      documents: { view: true, create: true, edit: true, delete: false },
-      reports: { view: true, create: false, edit: false, delete: false },
-      settings: { view: false, create: false, edit: false, delete: false },
+      dashboard: { view: true, viewAll: false, cards: { totalUsers: false, activeScales: true, pendingPayments: true, occupancyRate: false }, charts: { usersByRole: false, scalesTrend: false, locationRatings: false } },
+      users: noPerm(),
+      scales: readOnlyPerm(false),
+      locations: readOnlyPerm(false),
+      payments: readOnlyPerm(false),
+      documents: { view: true, create: true, edit: true, delete: false, viewAll: false },
+      reports: readOnlyPerm(false),
+      settings: noPerm(),
     },
     createdAt: lastWeek,
     updatedAt: now,

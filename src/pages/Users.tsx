@@ -3,95 +3,34 @@ import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
-  Plus,
-  Search,
-  Filter,
-  MoreHorizontal,
-  Pencil,
-  Trash2,
-  UserCheck,
-  UserX,
-  Eye,
-  Loader2,
+  Plus, Search, Filter, MoreHorizontal, Pencil, Trash2,
+  UserCheck, UserX, Eye, Loader2, ImageIcon,
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import {
-  initializeStorage,
-  STORAGE_KEYS,
-  getAll,
-  create,
-  update,
-  softDelete,
-} from '@/lib/mocks/storage';
+import { initializeStorage, STORAGE_KEYS, getAll, create, update, softDelete } from '@/lib/mocks/storage';
 import type { UserProfile, Specialty } from '@/lib/mocks/types';
 import { userSchema, type UserFormData } from '@/lib/validations';
 
-const roleLabels: Record<string, string> = {
-  admin: 'Administrador',
-  gestor: 'Gestor',
-  escalista: 'Escalista',
-  medico: 'Médico',
-};
+const roleLabels: Record<string, string> = { admin: 'Administrador', gestor: 'Gestor', escalista: 'Escalista', medico: 'Médico' };
+const statusLabels: Record<string, string> = { ativo: 'Ativo', inativo: 'Inativo', pendente: 'Pendente' };
+const statusColors: Record<string, string> = { ativo: 'bg-success/15 text-success border-success/30', inativo: 'bg-destructive/15 text-destructive border-destructive/30', pendente: 'bg-warning/15 text-warning border-warning/30' };
 
-const statusLabels: Record<string, string> = {
-  ativo: 'Ativo',
-  inativo: 'Inativo',
-  pendente: 'Pendente',
-};
+// Preset avatar seeds (same as mock data)
+const AVATAR_SEEDS = ['Carlos', 'Maria', 'Joao', 'Ana', 'Pedro', 'Lucia', 'Fernando', 'Beatriz', 'Ricardo', 'Camila', 'Diego', 'Juliana'];
+const getAvatarUrl = (seed: string) => `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
 
-const statusColors: Record<string, string> = {
-  ativo: 'bg-success/15 text-success border-success/30',
-  inativo: 'bg-destructive/15 text-destructive border-destructive/30',
-  pendente: 'bg-warning/15 text-warning border-warning/30',
-};
-
-// ViaCEP
 async function fetchAddressByCep(cep: string) {
   const cleanCep = cep.replace(/\D/g, '');
   if (cleanCep.length !== 8) return null;
@@ -100,9 +39,7 @@ async function fetchAddressByCep(cep: string) {
     const data = await response.json();
     if (data.erro) return null;
     return { street: data.logradouro, neighborhood: data.bairro, city: data.localidade, state: data.uf };
-  } catch {
-    return null;
-  }
+  } catch { return null; }
 }
 
 export default function Users() {
@@ -118,31 +55,18 @@ export default function Users() {
   const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
-  const [isLoadingCep, setIsLoadingCep] = useState(false);
+  const [selectedAvatar, setSelectedAvatar] = useState<string>(getAvatarUrl('Carlos'));
+  const [customAvatarFile, setCustomAvatarFile] = useState<string | null>(null);
   const { toast } = useToast();
 
   const form = useForm<UserFormData>({
     resolver: zodResolver(userSchema),
-    defaultValues: {
-      name: '',
-      email: '',
-      phone: '',
-      cpf: '',
-      role: 'medico',
-      status: 'ativo',
-      crm: '',
-      crmState: '',
-      specialties: [],
-      managerId: '',
-    },
+    defaultValues: { name: '', email: '', phone: '', cpf: '', role: 'medico', status: 'ativo', crm: '', crmState: '', specialties: [], managerId: '' },
   });
 
   const watchRole = form.watch('role');
 
-  useEffect(() => {
-    initializeStorage();
-    loadData();
-  }, []);
+  useEffect(() => { initializeStorage(); loadData(); }, []);
 
   const loadData = () => {
     const data = getAll<UserProfile>(STORAGE_KEYS.USERS);
@@ -155,12 +79,7 @@ export default function Users() {
     let result = users;
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      result = result.filter(
-        (u) =>
-          u.name.toLowerCase().includes(term) ||
-          u.email.toLowerCase().includes(term) ||
-          u.cpf.includes(term)
-      );
+      result = result.filter((u) => u.name.toLowerCase().includes(term) || u.email.toLowerCase().includes(term) || u.cpf.includes(term));
     }
     if (roleFilter !== 'all') result = result.filter((u) => u.role === roleFilter);
     if (statusFilter !== 'all') result = result.filter((u) => u.status === statusFilter);
@@ -170,47 +89,35 @@ export default function Users() {
   const openDialog = (user?: UserProfile) => {
     if (user) {
       setEditingUser(user);
-      form.reset({
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        cpf: user.cpf,
-        role: user.role,
-        status: user.status,
-        crm: user.crm || '',
-        crmState: user.crmState || '',
-        specialties: user.specialties || [],
-        managerId: user.managerId || '',
-      });
+      setSelectedAvatar(user.avatarUrl || getAvatarUrl('Carlos'));
+      setCustomAvatarFile(null);
+      form.reset({ name: user.name, email: user.email, phone: user.phone, cpf: user.cpf, role: user.role, status: user.status, crm: user.crm || '', crmState: user.crmState || '', specialties: user.specialties || [], managerId: user.managerId || '' });
     } else {
       setEditingUser(null);
-      form.reset({
-        name: '',
-        email: '',
-        phone: '',
-        cpf: '',
-        role: 'medico',
-        status: 'ativo',
-        crm: '',
-        crmState: '',
-        specialties: [],
-        managerId: '',
-      });
+      setSelectedAvatar(getAvatarUrl('Carlos'));
+      setCustomAvatarFile(null);
+      form.reset({ name: '', email: '', phone: '', cpf: '', role: 'medico', status: 'ativo', crm: '', crmState: '', specialties: [], managerId: '' });
     }
     setDialogOpen(true);
   };
 
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const dataUrl = reader.result as string;
+      setCustomAvatarFile(dataUrl);
+      setSelectedAvatar(dataUrl);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const onSubmit = (data: UserFormData) => {
     const userData: Record<string, unknown> = {
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-      cpf: data.cpf,
-      role: data.role,
-      status: data.status,
-      avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.name.replace(/\s/g, '')}`,
+      name: data.name, email: data.email, phone: data.phone, cpf: data.cpf,
+      role: data.role, status: data.status, avatarUrl: selectedAvatar,
     };
-
     if (data.role === 'medico') {
       userData.crm = data.crm;
       userData.crmState = data.crmState;
@@ -225,24 +132,14 @@ export default function Users() {
       create(STORAGE_KEYS.USERS, userData);
       toast({ title: 'Usuário criado!', description: `${data.name} foi adicionado.` });
     }
-
     setDialogOpen(false);
     loadData();
   };
 
-  const handleDelete = (user: UserProfile) => {
-    setUserToDelete(user);
-    setDeleteDialogOpen(true);
-  };
-
+  const handleDelete = (user: UserProfile) => { setUserToDelete(user); setDeleteDialogOpen(true); };
   const confirmDelete = () => {
-    if (userToDelete) {
-      softDelete(STORAGE_KEYS.USERS, userToDelete.id);
-      loadData();
-      toast({ title: 'Usuário excluído', description: `${userToDelete.name} foi removido.` });
-    }
-    setDeleteDialogOpen(false);
-    setUserToDelete(null);
+    if (userToDelete) { softDelete(STORAGE_KEYS.USERS, userToDelete.id); loadData(); toast({ title: 'Usuário excluído', description: `${userToDelete.name} foi removido.` }); }
+    setDeleteDialogOpen(false); setUserToDelete(null);
   };
 
   const toggleStatus = (user: UserProfile) => {
@@ -252,11 +149,7 @@ export default function Users() {
     toast({ title: 'Status atualizado', description: `${user.name} agora está ${statusLabels[newStatus].toLowerCase()}.` });
   };
 
-  const viewDetails = (user: UserProfile) => {
-    setSelectedUser(user);
-    setDetailsDialogOpen(true);
-  };
-
+  const viewDetails = (user: UserProfile) => { setSelectedUser(user); setDetailsDialogOpen(true); };
   const managers = users.filter((u) => u.role === 'admin' || u.role === 'gestor');
 
   return (
@@ -268,10 +161,7 @@ export default function Users() {
             <h1 className="text-3xl font-bold tracking-tight">Usuários</h1>
             <p className="text-muted-foreground">Gerencie os usuários do sistema</p>
           </div>
-          <Button onClick={() => openDialog()} className="w-full sm:w-auto">
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Usuário
-          </Button>
+          <Button onClick={() => openDialog()} className="w-full sm:w-auto"><Plus className="mr-2 h-4 w-4" />Novo Usuário</Button>
         </div>
 
         {/* Filters */}
@@ -283,10 +173,7 @@ export default function Users() {
                 <Input placeholder="Buscar por nome, email ou CPF..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
               </div>
               <Select value={roleFilter} onValueChange={setRoleFilter}>
-                <SelectTrigger className="w-full sm:w-[180px]">
-                  <Filter className="mr-2 h-4 w-4" />
-                  <SelectValue placeholder="Perfil" />
-                </SelectTrigger>
+                <SelectTrigger className="w-full sm:w-[180px]"><Filter className="mr-2 h-4 w-4" /><SelectValue placeholder="Perfil" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os perfis</SelectItem>
                   <SelectItem value="admin">Administrador</SelectItem>
@@ -296,9 +183,7 @@ export default function Users() {
                 </SelectContent>
               </Select>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-[180px]">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
+                <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Status" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os status</SelectItem>
                   <SelectItem value="ativo">Ativo</SelectItem>
@@ -312,11 +197,7 @@ export default function Users() {
 
         {/* Table */}
         <Card className="glass-card">
-          <CardHeader>
-            <CardTitle className="text-lg">
-              {filteredUsers.length} usuário{filteredUsers.length !== 1 ? 's' : ''} encontrado{filteredUsers.length !== 1 ? 's' : ''}
-            </CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle className="text-lg">{filteredUsers.length} usuário{filteredUsers.length !== 1 ? 's' : ''} encontrado{filteredUsers.length !== 1 ? 's' : ''}</CardTitle></CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
               <Table>
@@ -335,34 +216,19 @@ export default function Users() {
                     <TableRow key={user.id} className="group">
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          <Avatar className="h-10 w-10">
-                            <AvatarImage src={user.avatarUrl} />
-                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-medium">{user.name}</p>
-                            <p className="text-sm text-muted-foreground">{user.email}</p>
-                          </div>
+                          <Avatar className="h-10 w-10"><AvatarImage src={user.avatarUrl} /><AvatarFallback>{user.name.charAt(0)}</AvatarFallback></Avatar>
+                          <div><p className="font-medium">{user.name}</p><p className="text-sm text-muted-foreground">{user.email}</p></div>
                         </div>
                       </TableCell>
                       <TableCell><Badge variant="secondary">{roleLabels[user.role]}</Badge></TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={statusColors[user.status]}>{statusLabels[user.status]}</Badge>
-                      </TableCell>
+                      <TableCell><Badge variant="outline" className={statusColors[user.status]}>{statusLabels[user.status]}</Badge></TableCell>
                       <TableCell className="hidden md:table-cell">{user.phone}</TableCell>
                       <TableCell className="hidden lg:table-cell">
-                        {user.averageRating ? (
-                          <div className="flex items-center gap-1">
-                            <span className="text-warning">★</span>
-                            <span>{user.averageRating.toFixed(1)}</span>
-                          </div>
-                        ) : <span className="text-muted-foreground">—</span>}
+                        {user.averageRating ? (<div className="flex items-center gap-1"><span className="text-warning">★</span><span>{user.averageRating.toFixed(1)}</span></div>) : <span className="text-muted-foreground">—</span>}
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100"><MoreHorizontal className="h-4 w-4" /></Button>
-                          </DropdownMenuTrigger>
+                          <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Ações</DropdownMenuLabel>
                             <DropdownMenuSeparator />
@@ -372,9 +238,7 @@ export default function Users() {
                               {user.status === 'ativo' ? <><UserX className="mr-2 h-4 w-4" />Desativar</> : <><UserCheck className="mr-2 h-4 w-4" />Ativar</>}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleDelete(user)}>
-                              <Trash2 className="mr-2 h-4 w-4" />Excluir
-                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleDelete(user)}><Trash2 className="mr-2 h-4 w-4" />Excluir</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -395,6 +259,34 @@ export default function Users() {
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                {/* Avatar Selection */}
+                <div className="space-y-2">
+                  <FormLabel>Avatar</FormLabel>
+                  <div className="flex items-center gap-4">
+                    <Avatar className="h-16 w-16 border-2 border-primary">
+                      <AvatarImage src={selectedAvatar} />
+                      <AvatarFallback>?</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <label className="cursor-pointer">
+                        <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+                        <Button type="button" variant="outline" size="sm" asChild><span><ImageIcon className="mr-2 h-4 w-4" />Upload foto</span></Button>
+                      </label>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-6 gap-2 rounded-lg border p-3">
+                    {AVATAR_SEEDS.map((seed) => {
+                      const url = getAvatarUrl(seed);
+                      return (
+                        <button key={seed} type="button" onClick={() => { setSelectedAvatar(url); setCustomAvatarFile(null); }}
+                          className={`rounded-full p-0.5 transition-all ${selectedAvatar === url && !customAvatarFile ? 'ring-2 ring-primary ring-offset-2' : 'hover:ring-2 hover:ring-muted-foreground/30'}`}>
+                          <Avatar className="h-10 w-10"><AvatarImage src={url} /><AvatarFallback>{seed[0]}</AvatarFallback></Avatar>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 <FormField control={form.control} name="name" render={({ field }) => (
                   <FormItem><FormLabel>Nome</FormLabel><FormControl><Input {...field} placeholder="Nome completo" /></FormControl><FormMessage /></FormItem>
                 )} />
@@ -414,32 +306,26 @@ export default function Users() {
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <FormField control={form.control} name="role" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Perfil</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                    <FormItem><FormLabel>Perfil</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                         <SelectContent>
                           <SelectItem value="admin">Administrador</SelectItem>
                           <SelectItem value="gestor">Gestor</SelectItem>
                           <SelectItem value="escalista">Escalista</SelectItem>
                           <SelectItem value="medico">Médico</SelectItem>
                         </SelectContent>
-                      </Select>
-                      <FormMessage />
+                      </Select><FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="status" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                    <FormItem><FormLabel>Status</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                         <SelectContent>
                           <SelectItem value="ativo">Ativo</SelectItem>
                           <SelectItem value="inativo">Inativo</SelectItem>
                           <SelectItem value="pendente">Pendente</SelectItem>
                         </SelectContent>
-                      </Select>
-                      <FormMessage />
+                      </Select><FormMessage />
                     </FormItem>
                   )} />
                 </div>
@@ -454,24 +340,16 @@ export default function Users() {
                         <FormItem><FormLabel>UF do CRM</FormLabel><FormControl><Input {...field} placeholder="SP" maxLength={2} /></FormControl><FormMessage /></FormItem>
                       )} />
                     </div>
-
                     <FormField control={form.control} name="specialties" render={({ field }) => (
                       <FormItem>
                         <FormLabel>Especialidades</FormLabel>
                         <div className="grid grid-cols-2 gap-2 rounded-lg border p-3">
                           {specialties.map((spec) => (
                             <label key={spec.id} className="flex items-center gap-2 text-sm cursor-pointer">
-                              <Checkbox
-                                checked={field.value?.includes(spec.id)}
-                                onCheckedChange={(checked) => {
-                                  const current = field.value || [];
-                                  field.onChange(
-                                    checked
-                                      ? [...current, spec.id]
-                                      : current.filter((id) => id !== spec.id)
-                                  );
-                                }}
-                              />
+                              <Checkbox checked={field.value?.includes(spec.id)} onCheckedChange={(checked) => {
+                                const current = field.value || [];
+                                field.onChange(checked ? [...current, spec.id] : current.filter((id) => id !== spec.id));
+                              }} />
                               {spec.name}
                             </label>
                           ))}
@@ -485,13 +363,11 @@ export default function Users() {
                 <FormField control={form.control} name="managerId" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Gestor (opcional)</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                    <Select onValueChange={field.onChange} value={field.value || 'none'}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecione um gestor" /></SelectTrigger></FormControl>
                       <SelectContent>
-                        <SelectItem value="">Nenhum</SelectItem>
-                        {managers.map((m) => (
-                          <SelectItem key={m.id} value={m.id}>{m.name} ({roleLabels[m.role]})</SelectItem>
-                        ))}
+                        <SelectItem value="none">Nenhum</SelectItem>
+                        {managers.map((m) => <SelectItem key={m.id} value={m.id}>{m.name} ({roleLabels[m.role]})</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -523,19 +399,13 @@ export default function Users() {
 
         {/* Details Dialog */}
         <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="sm:max-w-lg">
             <DialogHeader><DialogTitle>Detalhes do Usuário</DialogTitle></DialogHeader>
             {selectedUser && (
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
-                  <Avatar className="h-16 w-16">
-                    <AvatarImage src={selectedUser.avatarUrl} />
-                    <AvatarFallback className="text-lg">{selectedUser.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h3 className="text-lg font-semibold">{selectedUser.name}</h3>
-                    <p className="text-muted-foreground">{selectedUser.email}</p>
-                  </div>
+                  <Avatar className="h-16 w-16"><AvatarImage src={selectedUser.avatarUrl} /><AvatarFallback className="text-lg">{selectedUser.name.charAt(0)}</AvatarFallback></Avatar>
+                  <div><h3 className="text-lg font-semibold">{selectedUser.name}</h3><p className="text-muted-foreground">{selectedUser.email}</p></div>
                 </div>
                 <div className="grid gap-3 rounded-lg border p-4">
                   <div className="flex justify-between"><span className="text-muted-foreground">Perfil</span><Badge variant="secondary">{roleLabels[selectedUser.role]}</Badge></div>
@@ -547,10 +417,7 @@ export default function Users() {
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Especialidades</span>
                       <div className="flex flex-wrap gap-1">
-                        {selectedUser.specialties.map((sId) => {
-                          const spec = specialties.find((s) => s.id === sId);
-                          return spec ? <Badge key={sId} variant="outline" className="text-xs">{spec.name}</Badge> : null;
-                        })}
+                        {selectedUser.specialties.map((sId) => { const spec = specialties.find((s) => s.id === sId); return spec ? <Badge key={sId} variant="outline" className="text-xs">{spec.name}</Badge> : null; })}
                       </div>
                     </div>
                   )}

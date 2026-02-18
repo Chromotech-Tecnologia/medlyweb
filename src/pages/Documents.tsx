@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   FileText, Upload, Clock, CheckCircle, XCircle, AlertCircle,
-  Plus, Search, MoreHorizontal, Pencil, Trash2, Eye,
+  Plus, Search, MoreHorizontal, Pencil, Trash2, Eye, File, X,
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
@@ -36,6 +36,9 @@ export default function Documents() {
   const [editingDoc, setEditingDoc] = useState<Document | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [docToDelete, setDocToDelete] = useState<Document | null>(null);
+  const [uploadedFile, setUploadedFile] = useState<{ name: string; dataUrl: string } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const form = useForm<DocumentFormData>({
@@ -61,10 +64,36 @@ export default function Documents() {
 
   const getUserName = (id: string) => users.find((u) => u.id === id)?.name || 'N/A';
 
+  const handleFileSelect = (file: globalThis.File) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setUploadedFile({ name: file.name, dataUrl: reader.result as string });
+      // Auto-fill name if empty
+      if (!form.getValues('name')) {
+        form.setValue('name', file.name.replace(/\.[^/.]+$/, ''));
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleFileSelect(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(true); };
+  const handleDragLeave = () => setIsDragging(false);
+
   const openDialog = (doc?: Document) => {
+    setUploadedFile(null);
     if (doc) {
       setEditingDoc(doc);
       form.reset({ name: doc.name, category: doc.category, userId: doc.userId, expirationDate: doc.expirationDate || '', reviewNotes: doc.reviewNotes || '' });
+      if (doc.fileUrl && doc.fileUrl !== '#mock-file') {
+        setUploadedFile({ name: doc.name, dataUrl: doc.fileUrl });
+      }
     } else {
       setEditingDoc(null);
       form.reset({ name: '', category: 'outro', userId: '', expirationDate: '', reviewNotes: '' });
@@ -74,10 +103,8 @@ export default function Documents() {
 
   const onSubmit = (data: DocumentFormData) => {
     const docData: Record<string, unknown> = {
-      name: data.name,
-      category: data.category,
-      userId: data.userId,
-      fileUrl: '#mock-file',
+      name: data.name, category: data.category, userId: data.userId,
+      fileUrl: uploadedFile?.dataUrl || '#mock-file',
       status: 'pendente',
       expirationDate: data.expirationDate || undefined,
       reviewNotes: data.reviewNotes || undefined,
@@ -118,9 +145,7 @@ export default function Documents() {
             <h1 className="text-3xl font-bold tracking-tight">Documentos</h1>
             <p className="text-muted-foreground">Gerencie documentos e validações</p>
           </div>
-          <Button onClick={() => openDialog()} className="w-full sm:w-auto">
-            <Upload className="mr-2 h-4 w-4" />Enviar Documento
-          </Button>
+          <Button onClick={() => openDialog()} className="w-full sm:w-auto"><Upload className="mr-2 h-4 w-4" />Enviar Documento</Button>
         </div>
 
         {/* Stats */}
@@ -153,9 +178,7 @@ export default function Documents() {
 
         {/* Table */}
         <Card className="glass-card">
-          <CardHeader>
-            <CardTitle className="text-lg">Documentos ({filteredDocs.length})</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle className="text-lg">Documentos ({filteredDocs.length})</CardTitle></CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
@@ -175,7 +198,15 @@ export default function Documents() {
                   const StatusIcon = statusIcons[doc.status];
                   return (
                     <TableRow key={doc.id} className="group">
-                      <TableCell><div className="flex items-center gap-2"><FileText className="h-4 w-4 text-muted-foreground" /><span className="font-medium">{doc.name}</span></div></TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-muted-foreground" />
+                          <div>
+                            <span className="font-medium">{doc.name}</span>
+                            {doc.fileUrl && doc.fileUrl !== '#mock-file' && <p className="text-xs text-muted-foreground">Arquivo anexado</p>}
+                          </div>
+                        </div>
+                      </TableCell>
                       <TableCell className="text-sm">{getUserName(doc.userId)}</TableCell>
                       <TableCell><Badge variant="secondary">{categoryLabels[doc.category]}</Badge></TableCell>
                       <TableCell><Badge variant="outline" className={statusColors[doc.status]}><StatusIcon className="mr-1 h-3 w-3" />{statusLabels[doc.status]}</Badge></TableCell>
@@ -205,13 +236,49 @@ export default function Documents() {
 
         {/* Form Dialog */}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
             <DialogHeader>
               <DialogTitle>{editingDoc ? 'Editar Documento' : 'Enviar Documento'}</DialogTitle>
-              <DialogDescription>Preencha as informações do documento.</DialogDescription>
+              <DialogDescription>Preencha as informações e faça upload do arquivo.</DialogDescription>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                {/* File Upload Drop Zone */}
+                <div className="space-y-2">
+                  <FormLabel>Arquivo</FormLabel>
+                  <div
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`relative cursor-pointer rounded-lg border-2 border-dashed p-6 text-center transition-colors ${
+                      isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50'
+                    }`}
+                  >
+                    <input ref={fileInputRef} type="file" className="hidden" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileSelect(f); }} />
+                    {uploadedFile ? (
+                      <div className="flex items-center justify-center gap-3">
+                        <File className="h-8 w-8 text-primary" />
+                        <div className="text-left">
+                          <p className="font-medium text-sm">{uploadedFile.name}</p>
+                          <p className="text-xs text-muted-foreground">Clique para substituir</p>
+                        </div>
+                        <Button type="button" variant="ghost" size="icon" className="ml-2 h-6 w-6"
+                          onClick={(e) => { e.stopPropagation(); setUploadedFile(null); }}>
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div>
+                        <Upload className="mx-auto h-8 w-8 text-muted-foreground/60" />
+                        <p className="mt-2 text-sm font-medium">Arraste um arquivo ou clique para selecionar</p>
+                        <p className="text-xs text-muted-foreground">PDF, DOC, DOCX, JPG, PNG (máx. 10MB)</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <FormField control={form.control} name="name" render={({ field }) => (
                   <FormItem><FormLabel>Nome</FormLabel><FormControl><Input {...field} placeholder="Ex: CRM - Dr. João" /></FormControl><FormMessage /></FormItem>
                 )} />
