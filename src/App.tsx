@@ -20,6 +20,7 @@ import Payments from "./pages/Payments";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Profiles from "./pages/Profiles";
+import DoctorArea from "./pages/DoctorArea";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +38,7 @@ const App = () => (
             
             {/* Main Routes */}
             <Route path="/" element={<Index />} />
+            <Route path="/area-medico" element={<DoctorArea />} />
             <Route path="/usuarios" element={<Users />} />
             <Route path="/perfis" element={<Profiles />} />
             <Route path="/escalas" element={<Scales />} />

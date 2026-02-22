@@ -15,6 +15,7 @@ import {
   ClipboardList,
   BarChart3,
   Shield,
+  HeartPulse,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/' },
+  { icon: HeartPulse, label: 'Área do Médico', href: '/area-medico' },
   { icon: Users, label: 'Usuários', href: '/usuarios' },
   { icon: Shield, label: 'Perfis', href: '/perfis' },
   { icon: Calendar, label: 'Escalas', href: '/escalas' },
@@ -149,7 +151,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
               exit={{ opacity: 0 }}
               className="text-center text-xs text-sidebar-foreground/50"
             >
-              © 2024 Medly
+              © 2026 Medly
             </motion.div>
           )}
         </AnimatePresence>
