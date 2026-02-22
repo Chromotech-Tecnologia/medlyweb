@@ -38,7 +38,7 @@ export function Header({ onMenuClick, isDarkMode, onDarkModeToggle }: HeaderProp
     name: 'Carlos Silva',
     email: 'admin@medly.com',
     role: 'Administrador',
-    avatarUrl: 'https://randomuser.me/api/portraits/men/32.jpg',
+    avatarUrl: 'https://api.dicebear.com/9.x/adventurer/svg?seed=Carlos&backgroundColor=b6e3f4',
   };
 
   return (

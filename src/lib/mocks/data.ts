@@ -17,20 +17,20 @@ const now = new Date().toISOString();
 const yesterday = new Date(Date.now() - 86400000).toISOString();
 const lastWeek = new Date(Date.now() - 7 * 86400000).toISOString();
 
-// Professional avatar URLs - diverse doctors, men and women of various nationalities
+// Animated/illustrated avatar URLs using DiceBear Adventurer style
 export const PROFESSIONAL_AVATARS = [
-  'https://randomuser.me/api/portraits/men/32.jpg',     // Carlos - homem branco, roupa social
-  'https://randomuser.me/api/portraits/women/44.jpg',    // Maria - mulher morena, profissional
-  'https://randomuser.me/api/portraits/men/22.jpg',      // João - homem jovem, profissional
-  'https://randomuser.me/api/portraits/women/28.jpg',    // Ana - mulher médica
-  'https://randomuser.me/api/portraits/men/45.jpg',      // Pedro - homem médico
-  'https://randomuser.me/api/portraits/women/65.jpg',    // Lucia - mulher asiática
-  'https://randomuser.me/api/portraits/men/67.jpg',      // Fernando - homem negro
-  'https://randomuser.me/api/portraits/women/33.jpg',    // Beatriz - mulher loira
-  'https://randomuser.me/api/portraits/men/52.jpg',      // Ricardo - homem indiano
-  'https://randomuser.me/api/portraits/women/50.jpg',    // Camila - mulher latina
-  'https://randomuser.me/api/portraits/men/78.jpg',      // Diego - homem árabe
-  'https://randomuser.me/api/portraits/women/72.jpg',    // Juliana - mulher negra
+  'https://api.dicebear.com/9.x/adventurer/svg?seed=Carlos&backgroundColor=b6e3f4',
+  'https://api.dicebear.com/9.x/adventurer/svg?seed=Maria&backgroundColor=ffd5dc',
+  'https://api.dicebear.com/9.x/adventurer/svg?seed=Joao&backgroundColor=c0aede',
+  'https://api.dicebear.com/9.x/adventurer/svg?seed=Ana&backgroundColor=d1f4d1',
+  'https://api.dicebear.com/9.x/adventurer/svg?seed=Pedro&backgroundColor=ffdfba',
+  'https://api.dicebear.com/9.x/adventurer/svg?seed=Lucia&backgroundColor=f4e3b6',
+  'https://api.dicebear.com/9.x/adventurer/svg?seed=Fernando&backgroundColor=b6d4f4',
+  'https://api.dicebear.com/9.x/adventurer/svg?seed=Beatriz&backgroundColor=f4b6e0',
+  'https://api.dicebear.com/9.x/adventurer/svg?seed=Ricardo&backgroundColor=b6f4e3',
+  'https://api.dicebear.com/9.x/adventurer/svg?seed=Camila&backgroundColor=f4d1b6',
+  'https://api.dicebear.com/9.x/adventurer/svg?seed=Diego&backgroundColor=d4b6f4',
+  'https://api.dicebear.com/9.x/adventurer/svg?seed=Juliana&backgroundColor=f4b6b6',
 ];
 
 // Mock Users
