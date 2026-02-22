@@ -1,5 +1,6 @@
 import { useState, createContext, useContext, useEffect, ReactNode } from 'react';
 import type { UserProfile } from '@/lib/mocks/types';
+import { PROFESSIONAL_AVATARS } from '@/lib/mocks/data';
 import {
   STORAGE_KEYS,
   getFromStorage,
@@ -127,7 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role: 'medico', // Default role for new registrations
         status: 'pendente', // Requires admin approval
         address: data.address,
-        avatarUrl: `https://api.dicebear.com/9.x/personas/svg?seed=${encodeURIComponent(data.name)}&backgroundColor=b6e3f4`,
+        avatarUrl: PROFESSIONAL_AVATARS[Math.floor(Math.random() * PROFESSIONAL_AVATARS.length)],
         averageRating: 0,
         completedScales: 0,
         cancellationRate: 0,

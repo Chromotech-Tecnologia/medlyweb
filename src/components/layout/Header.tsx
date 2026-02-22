@@ -41,12 +41,12 @@ export function Header({ onMenuClick, isDarkMode, onDarkModeToggle }: HeaderProp
     name: authUser.name,
     email: authUser.email,
     role: authUser.role === 'admin' ? 'Administrador' : authUser.role === 'gestor' ? 'Gestor' : authUser.role === 'escalista' ? 'Escalista' : authUser.role === 'developer' ? 'Desenvolvedor' : 'Médico',
-    avatarUrl: authUser.avatarUrl || 'https://api.dicebear.com/9.x/personas/svg?seed=Default',
+    avatarUrl: authUser.avatarUrl || '',
   } : {
     name: 'Usuário',
     email: '',
     role: '',
-    avatarUrl: 'https://api.dicebear.com/9.x/personas/svg?seed=Default',
+    avatarUrl: '',
   };
 
   const handleLogout = () => {
