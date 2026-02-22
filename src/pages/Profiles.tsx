@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   Shield, Plus, Search, MoreHorizontal, Pencil, Trash2, Eye,
@@ -22,9 +22,10 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { initializeStorage, STORAGE_KEYS, getAll, create, update, softDelete } from '@/lib/mocks/storage';
 import type { RoleProfile, Permission, DashboardPermission, ProfilePermissions, UserRole } from '@/lib/mocks/types';
+import { useAuth } from '@/hooks/useAuth';
 
-const roleLabels: Record<string, string> = { admin: 'Administrador', gestor: 'Gestor', escalista: 'Escalista', medico: 'Médico' };
-const roleColors: Record<string, string> = { admin: 'bg-destructive/15 text-destructive', gestor: 'bg-primary/15 text-primary', escalista: 'bg-warning/15 text-warning', medico: 'bg-success/15 text-success' };
+const roleLabels: Record<string, string> = { admin: 'Administrador', gestor: 'Gestor', escalista: 'Escalista', medico: 'Médico', developer: 'Desenvolvedor' };
+const roleColors: Record<string, string> = { admin: 'bg-destructive/15 text-destructive', gestor: 'bg-primary/15 text-primary', escalista: 'bg-warning/15 text-warning', medico: 'bg-success/15 text-success', developer: 'bg-info/15 text-info' };
 
 const moduleLabels: Record<string, { label: string; icon: React.ElementType }> = {
   users: { label: 'Usuários', icon: Users },
@@ -50,6 +51,8 @@ const emptyDashboard = (): DashboardPermission => ({
 });
 
 export default function Profiles() {
+  const { user: currentUser } = useAuth();
+  const isDeveloper = currentUser?.role === 'developer';
   const [profiles, setProfiles] = useState<RoleProfile[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState<RoleProfile | null>(null);
@@ -72,7 +75,11 @@ export default function Profiles() {
 
   useEffect(() => { initializeStorage(); loadData(); }, []);
   const loadData = () => {
-    const data = getAll<RoleProfile>(STORAGE_KEYS.ROLE_PROFILES);
+    let data = getAll<RoleProfile>(STORAGE_KEYS.ROLE_PROFILES);
+    // Non-developer users cannot see developer profile
+    if (!isDeveloper) {
+      data = data.filter(p => p.role !== 'developer');
+    }
     // Ensure all profiles have complete dashboard permissions structure
     data.forEach(p => {
       if (!p.permissions) p.permissions = {} as ProfilePermissions;

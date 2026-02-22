@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -21,15 +21,16 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { initializeStorage, STORAGE_KEYS, getAll, create, update, softDelete } from '@/lib/mocks/storage';
 import type { UserProfile, Specialty } from '@/lib/mocks/types';
+import { useAuth } from '@/hooks/useAuth';
 import { userSchema, type UserFormData } from '@/lib/validations';
 
-const roleLabels: Record<string, string> = { admin: 'Administrador', gestor: 'Gestor', escalista: 'Escalista', medico: 'Médico' };
+const roleLabels: Record<string, string> = { admin: 'Administrador', gestor: 'Gestor', escalista: 'Escalista', medico: 'Médico', developer: 'Desenvolvedor' };
 const statusLabels: Record<string, string> = { ativo: 'Ativo', inativo: 'Inativo', pendente: 'Pendente' };
 const statusColors: Record<string, string> = { ativo: 'bg-success/15 text-success border-success/30', inativo: 'bg-destructive/15 text-destructive border-destructive/30', pendente: 'bg-warning/15 text-warning border-warning/30' };
 
-// Preset avatar seeds (same as mock data)
-const AVATAR_SEEDS = ['Carlos', 'Maria', 'Joao', 'Ana', 'Pedro', 'Lucia', 'Fernando', 'Beatriz', 'Ricardo', 'Camila', 'Diego', 'Juliana'];
-const getAvatarUrl = (seed: string) => `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
+// Professional diverse avatar URLs
+import { PROFESSIONAL_AVATARS } from '@/lib/mocks/data';
+const getAvatarUrl = (index: number) => PROFESSIONAL_AVATARS[index] || PROFESSIONAL_AVATARS[0];
 
 async function fetchAddressByCep(cep: string) {
   const cleanCep = cep.replace(/\D/g, '');
@@ -43,6 +44,8 @@ async function fetchAddressByCep(cep: string) {
 }
 
 export default function Users() {
+  const { user: currentUser } = useAuth();
+  const isDeveloper = currentUser?.role === 'developer';
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [specialties, setSpecialties] = useState<Specialty[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<UserProfile[]>([]);
@@ -55,7 +58,7 @@ export default function Users() {
   const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
-  const [selectedAvatar, setSelectedAvatar] = useState<string>(getAvatarUrl('Carlos'));
+  const [selectedAvatar, setSelectedAvatar] = useState<string>(getAvatarUrl(0));
   const [customAvatarFile, setCustomAvatarFile] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -69,7 +72,11 @@ export default function Users() {
   useEffect(() => { initializeStorage(); loadData(); }, []);
 
   const loadData = () => {
-    const data = getAll<UserProfile>(STORAGE_KEYS.USERS);
+    let data = getAll<UserProfile>(STORAGE_KEYS.USERS);
+    // Non-developer users cannot see developer users
+    if (!isDeveloper) {
+      data = data.filter(u => u.role !== 'developer');
+    }
     setUsers(data);
     setFilteredUsers(data);
     setSpecialties(getAll<Specialty>(STORAGE_KEYS.SPECIALTIES));
@@ -89,12 +96,12 @@ export default function Users() {
   const openDialog = (user?: UserProfile) => {
     if (user) {
       setEditingUser(user);
-      setSelectedAvatar(user.avatarUrl || getAvatarUrl('Carlos'));
+      setSelectedAvatar(user.avatarUrl || getAvatarUrl(0));
       setCustomAvatarFile(null);
       form.reset({ name: user.name, email: user.email, phone: user.phone, cpf: user.cpf, role: user.role, status: user.status, crm: user.crm || '', crmState: user.crmState || '', specialties: user.specialties || [], managerId: user.managerId || '' });
     } else {
       setEditingUser(null);
-      setSelectedAvatar(getAvatarUrl('Carlos'));
+      setSelectedAvatar(getAvatarUrl(0));
       setCustomAvatarFile(null);
       form.reset({ name: '', email: '', phone: '', cpf: '', role: 'medico', status: 'ativo', crm: '', crmState: '', specialties: [], managerId: '' });
     }
@@ -275,15 +282,12 @@ export default function Users() {
                     </div>
                   </div>
                   <div className="grid grid-cols-6 gap-2 rounded-lg border p-3">
-                    {AVATAR_SEEDS.map((seed) => {
-                      const url = getAvatarUrl(seed);
-                      return (
-                        <button key={seed} type="button" onClick={() => { setSelectedAvatar(url); setCustomAvatarFile(null); }}
-                          className={`rounded-full p-0.5 transition-all ${selectedAvatar === url && !customAvatarFile ? 'ring-2 ring-primary ring-offset-2' : 'hover:ring-2 hover:ring-muted-foreground/30'}`}>
-                          <Avatar className="h-10 w-10"><AvatarImage src={url} /><AvatarFallback>{seed[0]}</AvatarFallback></Avatar>
-                        </button>
-                      );
-                    })}
+                    {PROFESSIONAL_AVATARS.map((url, index) => (
+                      <button key={index} type="button" onClick={() => { setSelectedAvatar(url); setCustomAvatarFile(null); }}
+                        className={`rounded-full p-0.5 transition-all ${selectedAvatar === url && !customAvatarFile ? 'ring-2 ring-primary ring-offset-2' : 'hover:ring-2 hover:ring-muted-foreground/30'}`}>
+                        <Avatar className="h-10 w-10"><AvatarImage src={url} /><AvatarFallback>A</AvatarFallback></Avatar>
+                      </button>
+                    ))}
                   </div>
                 </div>
 
