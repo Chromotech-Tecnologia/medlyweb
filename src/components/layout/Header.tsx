@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -31,14 +33,25 @@ interface HeaderProps {
 }
 
 export function Header({ onMenuClick, isDarkMode, onDarkModeToggle }: HeaderProps) {
-  const [notifications] = useState(3); // Mock notification count
+  const { user: authUser, logout } = useAuth();
+  const navigate = useNavigate();
+  const [notifications] = useState(3);
 
-  // Mock user data
-  const user = {
-    name: 'Carlos Silva',
-    email: 'admin@medly.com',
-    role: 'Administrador',
-    avatarUrl: 'https://api.dicebear.com/9.x/adventurer/svg?seed=Carlos&backgroundColor=b6e3f4',
+  const user = authUser ? {
+    name: authUser.name,
+    email: authUser.email,
+    role: authUser.role === 'admin' ? 'Administrador' : authUser.role === 'gestor' ? 'Gestor' : authUser.role === 'escalista' ? 'Escalista' : authUser.role === 'developer' ? 'Desenvolvedor' : 'Médico',
+    avatarUrl: authUser.avatarUrl || 'https://api.dicebear.com/9.x/adventurer/svg?seed=Default',
+  } : {
+    name: 'Usuário',
+    email: '',
+    role: '',
+    avatarUrl: 'https://api.dicebear.com/9.x/adventurer/svg?seed=Default',
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
   };
 
   return (
@@ -208,7 +221,7 @@ export function Header({ onMenuClick, isDarkMode, onDarkModeToggle }: HeaderProp
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="flex items-center gap-2 text-destructive focus:text-destructive">
+              <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 text-destructive focus:text-destructive cursor-pointer">
                 <LogOut className="h-4 w-4" />
                 Sair
               </DropdownMenuItem>
