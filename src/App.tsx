@@ -24,6 +24,7 @@ import DoctorArea from "./pages/DoctorArea";
 
 const queryClient = new QueryClient();
 
+// App root component
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
