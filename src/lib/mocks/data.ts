@@ -17,20 +17,20 @@ const now = new Date().toISOString();
 const yesterday = new Date(Date.now() - 86400000).toISOString();
 const lastWeek = new Date(Date.now() - 7 * 86400000).toISOString();
 
-// Animated/illustrated avatar URLs using DiceBear Adventurer style
+// Formal illustrated avatar URLs using DiceBear Personas style
 export const PROFESSIONAL_AVATARS = [
-  'https://api.dicebear.com/9.x/adventurer/svg?seed=Carlos&backgroundColor=b6e3f4',
-  'https://api.dicebear.com/9.x/adventurer/svg?seed=Maria&backgroundColor=ffd5dc',
-  'https://api.dicebear.com/9.x/adventurer/svg?seed=Joao&backgroundColor=c0aede',
-  'https://api.dicebear.com/9.x/adventurer/svg?seed=Ana&backgroundColor=d1f4d1',
-  'https://api.dicebear.com/9.x/adventurer/svg?seed=Pedro&backgroundColor=ffdfba',
-  'https://api.dicebear.com/9.x/adventurer/svg?seed=Lucia&backgroundColor=f4e3b6',
-  'https://api.dicebear.com/9.x/adventurer/svg?seed=Fernando&backgroundColor=b6d4f4',
-  'https://api.dicebear.com/9.x/adventurer/svg?seed=Beatriz&backgroundColor=f4b6e0',
-  'https://api.dicebear.com/9.x/adventurer/svg?seed=Ricardo&backgroundColor=b6f4e3',
-  'https://api.dicebear.com/9.x/adventurer/svg?seed=Camila&backgroundColor=f4d1b6',
-  'https://api.dicebear.com/9.x/adventurer/svg?seed=Diego&backgroundColor=d4b6f4',
-  'https://api.dicebear.com/9.x/adventurer/svg?seed=Juliana&backgroundColor=f4b6b6',
+  'https://api.dicebear.com/9.x/personas/svg?seed=Carlos&backgroundColor=b6e3f4',
+  'https://api.dicebear.com/9.x/personas/svg?seed=Maria&backgroundColor=ffd5dc',
+  'https://api.dicebear.com/9.x/personas/svg?seed=Joao&backgroundColor=c0aede',
+  'https://api.dicebear.com/9.x/personas/svg?seed=Ana&backgroundColor=d1f4d1',
+  'https://api.dicebear.com/9.x/personas/svg?seed=Pedro&backgroundColor=ffdfba',
+  'https://api.dicebear.com/9.x/personas/svg?seed=Lucia&backgroundColor=f4e3b6',
+  'https://api.dicebear.com/9.x/personas/svg?seed=Fernando&backgroundColor=b6d4f4',
+  'https://api.dicebear.com/9.x/personas/svg?seed=Beatriz&backgroundColor=f4b6e0',
+  'https://api.dicebear.com/9.x/personas/svg?seed=Ricardo&backgroundColor=b6f4e3',
+  'https://api.dicebear.com/9.x/personas/svg?seed=Camila&backgroundColor=f4d1b6',
+  'https://api.dicebear.com/9.x/personas/svg?seed=Diego&backgroundColor=d4b6f4',
+  'https://api.dicebear.com/9.x/personas/svg?seed=Juliana&backgroundColor=f4b6b6',
 ];
 
 // Mock Users

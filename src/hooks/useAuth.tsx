@@ -127,7 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role: 'medico', // Default role for new registrations
         status: 'pendente', // Requires admin approval
         address: data.address,
-        avatarUrl: `https://api.dicebear.com/9.x/adventurer/svg?seed=${encodeURIComponent(data.name)}&backgroundColor=b6e3f4`,
+        avatarUrl: `https://api.dicebear.com/9.x/personas/svg?seed=${encodeURIComponent(data.name)}&backgroundColor=b6e3f4`,
         averageRating: 0,
         completedScales: 0,
         cancellationRate: 0,

@@ -33,7 +33,7 @@ export const STORAGE_KEYS = {
 // Initialize storage with mock data if empty
 export function initializeStorage() {
   const DATA_VERSION_KEY = `${STORAGE_PREFIX}data_version`;
-  const CURRENT_VERSION = '3'; // Bump this to force re-initialization
+  const CURRENT_VERSION = '4'; // Bump this to force re-initialization
 
   const initIfEmpty = <T>(key: string, data: T[]) => {
     if (!localStorage.getItem(key)) {
