@@ -98,7 +98,7 @@ export const userSchema = z.object({
   email: z.string().min(1, 'Email é obrigatório').email('Email inválido'),
   phone: z.string().min(1, 'Telefone é obrigatório'),
   cpf: z.string().min(1, 'CPF é obrigatório').refine(isValidCPF, 'CPF inválido'),
-  role: z.enum(['admin', 'gestor', 'escalista', 'medico']),
+  role: z.enum(['admin', 'gestor', 'escalista', 'medico', 'developer']),
   status: z.enum(['ativo', 'inativo', 'pendente']),
   crm: z.string().optional(),
   crmState: z.string().optional(),

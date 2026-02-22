@@ -1,6 +1,6 @@
 // Core Types for Medly Mock Data
 
-export type UserRole = 'admin' | 'gestor' | 'escalista' | 'medico';
+export type UserRole = 'admin' | 'gestor' | 'escalista' | 'medico' | 'developer';
 
 export type UserStatus = 'ativo' | 'inativo' | 'pendente';
 

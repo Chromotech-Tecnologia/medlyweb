@@ -17,6 +17,22 @@ const now = new Date().toISOString();
 const yesterday = new Date(Date.now() - 86400000).toISOString();
 const lastWeek = new Date(Date.now() - 7 * 86400000).toISOString();
 
+// Professional avatar URLs - diverse doctors, men and women of various nationalities
+export const PROFESSIONAL_AVATARS = [
+  'https://randomuser.me/api/portraits/men/32.jpg',     // Carlos - homem branco, roupa social
+  'https://randomuser.me/api/portraits/women/44.jpg',    // Maria - mulher morena, profissional
+  'https://randomuser.me/api/portraits/men/22.jpg',      // João - homem jovem, profissional
+  'https://randomuser.me/api/portraits/women/28.jpg',    // Ana - mulher médica
+  'https://randomuser.me/api/portraits/men/45.jpg',      // Pedro - homem médico
+  'https://randomuser.me/api/portraits/women/65.jpg',    // Lucia - mulher asiática
+  'https://randomuser.me/api/portraits/men/67.jpg',      // Fernando - homem negro
+  'https://randomuser.me/api/portraits/women/33.jpg',    // Beatriz - mulher loira
+  'https://randomuser.me/api/portraits/men/52.jpg',      // Ricardo - homem indiano
+  'https://randomuser.me/api/portraits/women/50.jpg',    // Camila - mulher latina
+  'https://randomuser.me/api/portraits/men/78.jpg',      // Diego - homem árabe
+  'https://randomuser.me/api/portraits/women/72.jpg',    // Juliana - mulher negra
+];
+
 // Mock Users
 export const mockUsers: UserProfile[] = [
   {
@@ -27,7 +43,7 @@ export const mockUsers: UserProfile[] = [
     cpf: '123.456.789-01',
     role: 'admin',
     status: 'ativo',
-    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Carlos',
+    avatarUrl: PROFESSIONAL_AVATARS[0],
     address: {
       cep: '01310-100',
       street: 'Av. Paulista',
@@ -51,7 +67,7 @@ export const mockUsers: UserProfile[] = [
     cpf: '234.567.890-12',
     role: 'gestor',
     status: 'ativo',
-    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Maria',
+    avatarUrl: PROFESSIONAL_AVATARS[1],
     subordinateIds: ['3', '4'],
     averageRating: 4.6,
     completedScales: 80,
@@ -68,7 +84,7 @@ export const mockUsers: UserProfile[] = [
     cpf: '345.678.901-23',
     role: 'escalista',
     status: 'ativo',
-    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Joao',
+    avatarUrl: PROFESSIONAL_AVATARS[2],
     managerId: '2',
     averageRating: 4.5,
     completedScales: 45,
@@ -85,7 +101,7 @@ export const mockUsers: UserProfile[] = [
     cpf: '456.789.012-34',
     role: 'medico',
     status: 'ativo',
-    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ana',
+    avatarUrl: PROFESSIONAL_AVATARS[3],
     crm: '123456',
     crmState: 'SP',
     crmValid: true,
@@ -106,7 +122,7 @@ export const mockUsers: UserProfile[] = [
     cpf: '567.890.123-45',
     role: 'medico',
     status: 'ativo',
-    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Pedro',
+    avatarUrl: PROFESSIONAL_AVATARS[4],
     crm: '654321',
     crmState: 'SP',
     crmValid: true,
@@ -114,6 +130,22 @@ export const mockUsers: UserProfile[] = [
     averageRating: 4.7,
     completedScales: 95,
     cancellationRate: 0.04,
+    createdAt: lastWeek,
+    updatedAt: now,
+    deletedAt: null,
+  },
+  {
+    id: '6',
+    name: 'Dev Medly',
+    email: 'developer@medly.com',
+    phone: '(11) 99999-0006',
+    cpf: '678.901.234-56',
+    role: 'developer',
+    status: 'ativo',
+    avatarUrl: PROFESSIONAL_AVATARS[8],
+    averageRating: 5.0,
+    completedScales: 0,
+    cancellationRate: 0,
     createdAt: lastWeek,
     updatedAt: now,
     deletedAt: null,
@@ -203,6 +235,25 @@ export const mockRoleProfiles: RoleProfile[] = [
       documents: { view: true, create: true, edit: true, delete: false, viewAll: false },
       reports: readOnlyPerm(false),
       settings: noPerm(),
+    },
+    createdAt: lastWeek,
+    updatedAt: now,
+    deletedAt: null,
+  },
+  {
+    id: '5',
+    name: 'Desenvolvedor',
+    role: 'developer',
+    description: 'Acesso total ao sistema, incluindo ferramentas de desenvolvimento',
+    permissions: {
+      dashboard: fullDash(),
+      users: fullPerm(),
+      scales: fullPerm(),
+      locations: fullPerm(),
+      payments: fullPerm(),
+      documents: fullPerm(),
+      reports: fullPerm(),
+      settings: fullPerm(),
     },
     createdAt: lastWeek,
     updatedAt: now,

@@ -32,11 +32,20 @@ export const STORAGE_KEYS = {
 
 // Initialize storage with mock data if empty
 export function initializeStorage() {
+  const DATA_VERSION_KEY = `${STORAGE_PREFIX}data_version`;
+  const CURRENT_VERSION = '2'; // Bump this to force re-initialization
+
   const initIfEmpty = <T>(key: string, data: T[]) => {
     if (!localStorage.getItem(key)) {
       localStorage.setItem(key, JSON.stringify(data));
     }
   };
+
+  // Force reset if data version changed
+  if (localStorage.getItem(DATA_VERSION_KEY) !== CURRENT_VERSION) {
+    Object.values(STORAGE_KEYS).forEach(key => localStorage.removeItem(key));
+    localStorage.setItem(DATA_VERSION_KEY, CURRENT_VERSION);
+  }
 
   initIfEmpty(STORAGE_KEYS.USERS, mockUsers);
   initIfEmpty(STORAGE_KEYS.ROLE_PROFILES, mockRoleProfiles);
