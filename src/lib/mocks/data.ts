@@ -17,20 +17,34 @@ const now = new Date().toISOString();
 const yesterday = new Date(Date.now() - 86400000).toISOString();
 const lastWeek = new Date(Date.now() - 7 * 86400000).toISOString();
 
-// Formal illustrated avatar URLs using DiceBear Personas style
+// Professional healthcare avatar imports (local assets)
+import avatarDoctorMale1 from '@/assets/avatar-doctor-male-1.png';
+import avatarDoctorFemale1 from '@/assets/avatar-doctor-female-1.png';
+import avatarManagerMale1 from '@/assets/avatar-manager-male-1.png';
+import avatarManagerFemale1 from '@/assets/avatar-manager-female-1.png';
+import avatarNurseMale1 from '@/assets/avatar-nurse-male-1.png';
+import avatarNurseFemale1 from '@/assets/avatar-nurse-female-1.png';
+import avatarDoctorMale2 from '@/assets/avatar-doctor-male-2.png';
+import avatarDoctorFemale2 from '@/assets/avatar-doctor-female-2.png';
+import avatarTechMale1 from '@/assets/avatar-tech-male-1.png';
+import avatarSurgeonFemale1 from '@/assets/avatar-surgeon-female-1.png';
+import avatarParamedicMale1 from '@/assets/avatar-paramedic-male-1.png';
+import avatarPharmacistFemale1 from '@/assets/avatar-pharmacist-female-1.png';
+
+// Professional healthcare avatars
 export const PROFESSIONAL_AVATARS = [
-  'https://api.dicebear.com/9.x/personas/svg?seed=Carlos&backgroundColor=b6e3f4',
-  'https://api.dicebear.com/9.x/personas/svg?seed=Maria&backgroundColor=ffd5dc',
-  'https://api.dicebear.com/9.x/personas/svg?seed=Joao&backgroundColor=c0aede',
-  'https://api.dicebear.com/9.x/personas/svg?seed=Ana&backgroundColor=d1f4d1',
-  'https://api.dicebear.com/9.x/personas/svg?seed=Pedro&backgroundColor=ffdfba',
-  'https://api.dicebear.com/9.x/personas/svg?seed=Lucia&backgroundColor=f4e3b6',
-  'https://api.dicebear.com/9.x/personas/svg?seed=Fernando&backgroundColor=b6d4f4',
-  'https://api.dicebear.com/9.x/personas/svg?seed=Beatriz&backgroundColor=f4b6e0',
-  'https://api.dicebear.com/9.x/personas/svg?seed=Ricardo&backgroundColor=b6f4e3',
-  'https://api.dicebear.com/9.x/personas/svg?seed=Camila&backgroundColor=f4d1b6',
-  'https://api.dicebear.com/9.x/personas/svg?seed=Diego&backgroundColor=d4b6f4',
-  'https://api.dicebear.com/9.x/personas/svg?seed=Juliana&backgroundColor=f4b6b6',
+  avatarDoctorMale1,
+  avatarManagerFemale1,
+  avatarNurseMale1,
+  avatarDoctorFemale1,
+  avatarDoctorMale2,
+  avatarNurseFemale1,
+  avatarManagerMale1,
+  avatarDoctorFemale2,
+  avatarTechMale1,
+  avatarSurgeonFemale1,
+  avatarParamedicMale1,
+  avatarPharmacistFemale1,
 ];
 
 // Mock Users
