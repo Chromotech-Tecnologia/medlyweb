@@ -30,6 +30,10 @@ import avatarTechMale1 from '@/assets/avatar-tech-male-1.png';
 import avatarSurgeonFemale1 from '@/assets/avatar-surgeon-female-1.png';
 import avatarParamedicMale1 from '@/assets/avatar-paramedic-male-1.png';
 import avatarPharmacistFemale1 from '@/assets/avatar-pharmacist-female-1.png';
+import avatarBusinessMale1 from '@/assets/avatar-business-male-1.png';
+import avatarBusinessFemale1 from '@/assets/avatar-business-female-1.png';
+import avatarBusinessMale2 from '@/assets/avatar-business-male-2.png';
+import avatarBusinessFemale2 from '@/assets/avatar-business-female-2.png';
 
 // Professional healthcare avatars
 export const PROFESSIONAL_AVATARS = [
@@ -45,6 +49,10 @@ export const PROFESSIONAL_AVATARS = [
   avatarSurgeonFemale1,
   avatarParamedicMale1,
   avatarPharmacistFemale1,
+  avatarBusinessMale1,
+  avatarBusinessFemale1,
+  avatarBusinessMale2,
+  avatarBusinessFemale2,
 ];
 
 // Mock Users
