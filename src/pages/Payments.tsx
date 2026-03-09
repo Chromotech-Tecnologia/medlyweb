@@ -193,15 +193,32 @@ export default function Payments() {
                 ) : filteredPayments.map((payment) => (
                   <TableRow key={payment.id} className="group">
                     <TableCell><div className="flex items-center gap-2"><DollarSign className="h-4 w-4 text-muted-foreground" /><span className="font-medium">{getScaleTitle(payment.scaleId)}</span></div></TableCell>
-                    <TableCell className="text-sm">{getDoctorName(payment.doctorId)}</TableCell>
+                    {!isDoctor && <TableCell className="text-sm">{getDoctorName(payment.doctorId)}</TableCell>}
                     <TableCell className="font-medium">{formatCurrency(payment.amount)}</TableCell>
                     <TableCell><Badge variant="outline" className={statusColors[payment.status]}>{statusLabels[payment.status]}</Badge></TableCell>
+                    <TableCell>
+                      {payment.confirmedByDoctor ? (
+                        <Badge variant="outline" className="bg-success/15 text-success border-success/30 gap-1">
+                          <ThumbsUp className="h-3 w-3" />Confirmado
+                        </Badge>
+                      ) : payment.status === 'pago' ? (
+                        isDoctor ? (
+                          <Button size="sm" variant="outline" className="gap-1 text-xs h-7" onClick={() => handleConfirmReceipt(payment)}>
+                            <ThumbsUp className="h-3 w-3" />Confirmar
+                          </Button>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Aguardando médico</span>
+                        )
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
                     <TableCell>{payment.dueDate}</TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => openDialog(payment)}><Pencil className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>
+                          {!isDoctor && <DropdownMenuItem onClick={() => openDialog(payment)}><Pencil className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>}
                           {payment.status !== 'pago' && <DropdownMenuItem onClick={() => handleMarkPaid(payment)}><CheckCircle className="mr-2 h-4 w-4" />Marcar como Pago</DropdownMenuItem>}
                           <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(payment)}><Trash2 className="mr-2 h-4 w-4" />Excluir</DropdownMenuItem>
                         </DropdownMenuContent>
