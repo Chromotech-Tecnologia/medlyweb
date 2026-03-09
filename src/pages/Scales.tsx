@@ -7,7 +7,7 @@ import { ptBR } from 'date-fns/locale';
 import {
   Plus, Search, Filter, Calendar as CalendarIcon, List, ChevronLeft, ChevronRight,
   Clock, MapPin, Users, DollarSign, MoreHorizontal, Eye, Pencil, Trash2,
-  UserPlus, CheckCircle, XCircle,
+  UserPlus, CheckCircle, XCircle, AlertTriangle, SlidersHorizontal, X,
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
@@ -21,11 +21,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { initializeStorage, STORAGE_KEYS, getAll, create, update, softDelete } from '@/lib/mocks/storage';
 import type { Scale, Location, Specialty, ScaleType } from '@/lib/mocks/types';
 import { scaleSchema, type ScaleFormData } from '@/lib/validations';
+import { checkScaleOverlap, type ScaleOverlap } from '@/lib/scaleUtils';
 
 const statusLabels: Record<string, string> = { rascunho: 'Rascunho', publicada: 'Publicada', em_andamento: 'Em Andamento', concluida: 'Concluída', cancelada: 'Cancelada' };
 const statusColors: Record<string, string> = { rascunho: 'bg-muted text-muted-foreground', publicada: 'bg-success/15 text-success border-success/30', em_andamento: 'bg-info/15 text-info border-info/30', concluida: 'bg-primary/15 text-primary border-primary/30', cancelada: 'bg-destructive/15 text-destructive border-destructive/30' };
@@ -47,7 +49,18 @@ export default function Scales() {
   const [editingScale, setEditingScale] = useState<Scale | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [scaleToDelete, setScaleToDelete] = useState<Scale | null>(null);
+  const [overlapWarnings, setOverlapWarnings] = useState<ScaleOverlap[]>([]);
   const { toast } = useToast();
+
+  // Advanced filters
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [locationFilter, setLocationFilter] = useState<string>('all');
+  const [specialtyFilter, setSpecialtyFilter] = useState<string>('all');
+  const [shiftFilter, setShiftFilter] = useState<string>('all');
+  const [dateFromFilter, setDateFromFilter] = useState('');
+  const [dateToFilter, setDateToFilter] = useState('');
+  const [minValueFilter, setMinValueFilter] = useState('');
+  const [maxValueFilter, setMaxValueFilter] = useState('');
 
   const form = useForm<ScaleFormData>({
     resolver: zodResolver(scaleSchema),
@@ -59,6 +72,13 @@ export default function Scales() {
     },
   });
 
+  // Watch form fields for overlap detection
+  const watchedLocationId = form.watch('locationId');
+  const watchedSpecialtyId = form.watch('specialtyId');
+  const watchedDate = form.watch('date');
+  const watchedStartTime = form.watch('startTime');
+  const watchedEndTime = form.watch('endTime');
+
   useEffect(() => { initializeStorage(); loadData(); }, []);
 
   const loadData = () => {
@@ -68,12 +88,49 @@ export default function Scales() {
     setScaleTypes(getAll<ScaleType>(STORAGE_KEYS.SCALE_TYPES));
   };
 
+  // Check overlaps when form fields change
+  useEffect(() => {
+    if (dialogOpen && watchedLocationId && watchedSpecialtyId && watchedDate && watchedStartTime && watchedEndTime) {
+      const overlaps = checkScaleOverlap(scales, {
+        locationId: watchedLocationId,
+        specialtyId: watchedSpecialtyId,
+        date: watchedDate,
+        startTime: watchedStartTime,
+        endTime: watchedEndTime,
+        id: editingScale?.id,
+      });
+      setOverlapWarnings(overlaps);
+    } else {
+      setOverlapWarnings([]);
+    }
+  }, [dialogOpen, watchedLocationId, watchedSpecialtyId, watchedDate, watchedStartTime, watchedEndTime, scales, editingScale]);
+
   useEffect(() => {
     let result = scales;
     if (searchTerm) { const term = searchTerm.toLowerCase(); result = result.filter((s) => s.title.toLowerCase().includes(term)); }
     if (statusFilter !== 'all') result = result.filter((s) => s.status === statusFilter);
+    if (locationFilter !== 'all') result = result.filter((s) => s.locationId === locationFilter);
+    if (specialtyFilter !== 'all') result = result.filter((s) => s.specialtyId === specialtyFilter);
+    if (shiftFilter !== 'all') result = result.filter((s) => s.shift === shiftFilter);
+    if (dateFromFilter) result = result.filter((s) => s.date >= dateFromFilter);
+    if (dateToFilter) result = result.filter((s) => s.date <= dateToFilter);
+    if (minValueFilter) result = result.filter((s) => s.paymentValue >= parseFloat(minValueFilter));
+    if (maxValueFilter) result = result.filter((s) => s.paymentValue <= parseFloat(maxValueFilter));
     setFilteredScales(result);
-  }, [searchTerm, statusFilter, scales]);
+  }, [searchTerm, statusFilter, locationFilter, specialtyFilter, shiftFilter, dateFromFilter, dateToFilter, minValueFilter, maxValueFilter, scales]);
+
+  const activeFilterCount = [locationFilter, specialtyFilter, shiftFilter, dateFromFilter, dateToFilter, minValueFilter, maxValueFilter]
+    .filter(f => f && f !== 'all').length;
+
+  const clearAdvancedFilters = () => {
+    setLocationFilter('all');
+    setSpecialtyFilter('all');
+    setShiftFilter('all');
+    setDateFromFilter('');
+    setDateToFilter('');
+    setMinValueFilter('');
+    setMaxValueFilter('');
+  };
 
   const getLocationName = (id: string) => locations.find((l) => l.id === id)?.name || 'N/A';
   const getSpecialtyName = (id: string) => specialties.find((s) => s.id === id)?.name || 'N/A';
@@ -95,6 +152,7 @@ export default function Scales() {
       setEditingScale(null);
       form.reset();
     }
+    setOverlapWarnings([]);
     setDialogOpen(true);
   };
 
@@ -113,6 +171,7 @@ export default function Scales() {
       toast({ title: 'Escala criada!', description: `${data.title} foi adicionada.` });
     }
     setDialogOpen(false);
+    setOverlapWarnings([]);
     loadData();
   };
 
@@ -168,6 +227,17 @@ export default function Scales() {
                     <SelectItem value="cancelada">Cancelada</SelectItem>
                   </SelectContent>
                 </Select>
+                <Button
+                  variant={showAdvancedFilters ? 'secondary' : 'outline'}
+                  onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                  className="gap-2"
+                >
+                  <SlidersHorizontal className="h-4 w-4" />
+                  Filtros
+                  {activeFilterCount > 0 && (
+                    <Badge className="h-5 w-5 rounded-full p-0 text-xs">{activeFilterCount}</Badge>
+                  )}
+                </Button>
               </div>
               <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'calendar' | 'list')}>
                 <TabsList>
@@ -176,6 +246,71 @@ export default function Scales() {
                 </TabsList>
               </Tabs>
             </div>
+
+            {/* Advanced Filters Panel */}
+            <Collapsible open={showAdvancedFilters} onOpenChange={setShowAdvancedFilters}>
+              <CollapsibleContent>
+                <div className="mt-4 pt-4 border-t space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-semibold">Filtros Avançados</h4>
+                    {activeFilterCount > 0 && (
+                      <Button variant="ghost" size="sm" onClick={clearAdvancedFilters} className="gap-1 text-xs h-7">
+                        <X className="h-3 w-3" />Limpar filtros
+                      </Button>
+                    )}
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1 block">Local</label>
+                      <Select value={locationFilter} onValueChange={setLocationFilter}>
+                        <SelectTrigger><SelectValue placeholder="Todos" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todos</SelectItem>
+                          {locations.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1 block">Especialidade</label>
+                      <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
+                        <SelectTrigger><SelectValue placeholder="Todas" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todas</SelectItem>
+                          {specialties.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1 block">Turno</label>
+                      <Select value={shiftFilter} onValueChange={setShiftFilter}>
+                        <SelectTrigger><SelectValue placeholder="Todos" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todos</SelectItem>
+                          {Object.entries(shiftLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1 block">Faixa de Valor</label>
+                      <div className="flex gap-2">
+                        <Input placeholder="Min" type="number" value={minValueFilter} onChange={e => setMinValueFilter(e.target.value)} className="text-xs" />
+                        <Input placeholder="Max" type="number" value={maxValueFilter} onChange={e => setMaxValueFilter(e.target.value)} className="text-xs" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1 block">Data de</label>
+                      <Input type="date" value={dateFromFilter} onChange={e => setDateFromFilter(e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1 block">Data até</label>
+                      <Input type="date" value={dateToFilter} onChange={e => setDateToFilter(e.target.value)} />
+                    </div>
+                  </div>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
           </CardContent>
         </Card>
 
@@ -191,6 +326,7 @@ export default function Scales() {
                       <TableHead>Escala</TableHead>
                       <TableHead>Local</TableHead>
                       <TableHead>Data/Horário</TableHead>
+                      <TableHead>Turno</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Valor</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
@@ -206,6 +342,7 @@ export default function Scales() {
                         <TableCell>
                           <div><p className="font-medium">{format(parseISO(scale.date), 'dd/MM/yyyy')}</p><p className="text-sm text-muted-foreground">{scale.startTime} - {scale.endTime}</p></div>
                         </TableCell>
+                        <TableCell><Badge variant="secondary" className="text-xs">{shiftLabels[scale.shift]}</Badge></TableCell>
                         <TableCell><Badge variant="outline" className={statusColors[scale.status]}>{statusLabels[scale.status]}</Badge></TableCell>
                         <TableCell className="font-medium">{formatCurrency(scale.paymentValue)}</TableCell>
                         <TableCell className="text-right">
@@ -261,12 +398,26 @@ export default function Scales() {
         )}
 
         {/* Form Dialog */}
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setOverlapWarnings([]); }}>
           <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
             <DialogHeader>
               <DialogTitle>{editingScale ? 'Editar Escala' : 'Nova Escala'}</DialogTitle>
               <DialogDescription>Preencha todas as informações da escala médica.</DialogDescription>
             </DialogHeader>
+
+            {/* Overlap Warnings */}
+            {overlapWarnings.length > 0 && (
+              <div className="rounded-lg bg-warning/10 border border-warning/30 p-3 space-y-2">
+                <div className="flex items-center gap-2 text-warning font-medium text-sm">
+                  <AlertTriangle className="h-4 w-4" />
+                  Sobreposição de Escalas Detectada
+                </div>
+                {overlapWarnings.map((ow, i) => (
+                  <p key={i} className="text-xs text-muted-foreground">{ow.message}</p>
+                ))}
+              </div>
+            )}
+
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField control={form.control} name="title" render={({ field }) => (
@@ -382,6 +533,16 @@ export default function Scales() {
                   {selectedScale.minPatients != null && (
                     <div className="flex items-center gap-2"><Users className="h-4 w-4 text-muted-foreground" /><span>{selectedScale.minPatients} - {selectedScale.maxPatients} pacientes</span></div>
                   )}
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="rounded-lg border p-3">
+                    <p className="text-muted-foreground text-xs">Prazo desistência</p>
+                    <p className="font-medium">{selectedScale.cancellationDeadlineDays} dias antes</p>
+                  </div>
+                  <div className="rounded-lg border p-3">
+                    <p className="text-muted-foreground text-xs">Prazo repasse</p>
+                    <p className="font-medium">{selectedScale.transferDeadlineDays} dias antes</p>
+                  </div>
                 </div>
               </div>
             )}
