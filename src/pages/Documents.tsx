@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   FileText, Upload, Clock, CheckCircle, XCircle, AlertCircle,
-  Plus, Search, MoreHorizontal, Pencil, Trash2, Eye, File, X, Download,
+  Plus, Search, MoreHorizontal, Pencil, Trash2, Eye, File, X, Download, Users, Filter,
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import { initializeStorage, STORAGE_KEYS, getAll, create, update, softDelete } from '@/lib/mocks/storage';
 import type { Document, UserProfile } from '@/lib/mocks/types';
 import { documentSchema, type DocumentFormData } from '@/lib/validations';
@@ -28,10 +30,20 @@ const statusIcons: Record<string, React.ElementType> = { pendente: Clock, aprova
 const categoryLabels: Record<string, string> = { identidade: 'Identidade', crm: 'CRM', diploma: 'Diploma', comprovante: 'Comprovante', contrato: 'Contrato', outro: 'Outro' };
 
 export default function Documents() {
+  const { user: currentUser } = useAuth();
+  const userRole = currentUser?.role;
+  const isAdmin = userRole === 'admin' || userRole === 'developer';
+  const isEscalista = userRole === 'escalista';
+  const isDoctor = userRole === 'medico';
+  const canEdit = isAdmin;
+  const canApprove = isAdmin;
+
   const [documents, setDocuments] = useState<Document[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [filteredDocs, setFilteredDocs] = useState<Document[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [doctorFilter, setDoctorFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingDoc, setEditingDoc] = useState<Document | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -51,26 +63,55 @@ export default function Documents() {
   useEffect(() => { initializeStorage(); loadData(); }, []);
 
   const loadData = () => {
-    setDocuments(getAll<Document>(STORAGE_KEYS.DOCUMENTS));
-    setUsers(getAll<UserProfile>(STORAGE_KEYS.USERS));
+    let docs = getAll<Document>(STORAGE_KEYS.DOCUMENTS);
+    const allUsers = getAll<UserProfile>(STORAGE_KEYS.USERS);
+    setUsers(allUsers);
+
+    // Role-based filtering
+    if (isDoctor && currentUser) {
+      docs = docs.filter(d => d.userId === currentUser.id);
+    } else if (isEscalista) {
+      // Escalista sees only doctor documents (read-only)
+      const doctorIds = allUsers.filter(u => u.role === 'medico').map(u => u.id);
+      docs = docs.filter(d => doctorIds.includes(d.userId));
+    }
+    // Admin/developer sees all
+
+    setDocuments(docs);
   };
 
   useEffect(() => {
+    let result = documents;
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      setFilteredDocs(documents.filter((d) => d.name.toLowerCase().includes(term)));
-    } else {
-      setFilteredDocs(documents);
+      result = result.filter((d) => d.name.toLowerCase().includes(term) || getUserName(d.userId).toLowerCase().includes(term));
     }
-  }, [searchTerm, documents]);
+    if (doctorFilter !== 'all') {
+      result = result.filter(d => d.userId === doctorFilter);
+    }
+    if (statusFilter !== 'all') {
+      result = result.filter(d => d.status === statusFilter);
+    }
+    setFilteredDocs(result);
+  }, [searchTerm, doctorFilter, statusFilter, documents]);
 
   const getUserName = (id: string) => users.find((u) => u.id === id)?.name || 'N/A';
+  const getUser = (id: string) => users.find((u) => u.id === id);
+  const doctorUsers = users.filter(u => u.role === 'medico');
+
+  // Group documents by doctor for escalista view
+  const doctorDocSummary = doctorUsers.map(doctor => {
+    const docs = documents.filter(d => d.userId === doctor.id);
+    const approved = docs.filter(d => d.status === 'aprovado').length;
+    const pending = docs.filter(d => d.status === 'pendente').length;
+    const rejected = docs.filter(d => d.status === 'rejeitado').length;
+    return { doctor, total: docs.length, approved, pending, rejected };
+  });
 
   const handleFileSelect = (file: globalThis.File) => {
     const reader = new FileReader();
     reader.onloadend = () => {
       setUploadedFile({ name: file.name, dataUrl: reader.result as string });
-      // Auto-fill name if empty
       if (!form.getValues('name')) {
         form.setValue('name', file.name.replace(/\.[^/.]+$/, ''));
       }
@@ -98,7 +139,8 @@ export default function Documents() {
       }
     } else {
       setEditingDoc(null);
-      form.reset({ name: '', category: 'outro', userId: '', expirationDate: '', reviewNotes: '' });
+      const defaults: DocumentFormData = { name: '', category: 'outro', userId: isDoctor && currentUser ? currentUser.id : '', expirationDate: '', reviewNotes: '' };
+      form.reset(defaults);
     }
     setDialogOpen(true);
   };
@@ -124,7 +166,7 @@ export default function Documents() {
   };
 
   const handleStatusChange = (doc: Document, status: 'aprovado' | 'rejeitado') => {
-    update(STORAGE_KEYS.DOCUMENTS, doc.id, { status, reviewedAt: new Date().toISOString() });
+    update(STORAGE_KEYS.DOCUMENTS, doc.id, { status, reviewedAt: new Date().toISOString(), reviewedBy: currentUser?.id });
     loadData();
     toast({ title: `Documento ${status}`, description: `${doc.name} foi ${status}.` });
   };
@@ -163,9 +205,13 @@ export default function Documents() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Documentos</h1>
-            <p className="text-muted-foreground">Gerencie documentos e validações</p>
+            <p className="text-muted-foreground">
+              {isDoctor ? 'Seus documentos enviados' : isEscalista ? 'Documentos dos médicos' : 'Gerencie documentos e validações'}
+            </p>
           </div>
-          <Button onClick={() => openDialog()} className="w-full sm:w-auto"><Upload className="mr-2 h-4 w-4" />Enviar Documento</Button>
+          {(isAdmin || isDoctor) && (
+            <Button onClick={() => openDialog()} className="w-full sm:w-auto"><Upload className="mr-2 h-4 w-4" />Enviar Documento</Button>
+          )}
         </div>
 
         {/* Stats */}
@@ -190,10 +236,70 @@ export default function Documents() {
           </Card>
         </div>
 
-        {/* Search */}
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Buscar documentos..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
+        {/* Doctor summary cards for escalista */}
+        {isEscalista && (
+          <Card className="glass-card">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2"><Users className="h-5 w-5" />Médicos e Documentos</CardTitle>
+              <CardDescription>Visão geral dos documentos por médico</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {doctorDocSummary.map(({ doctor, total, approved, pending, rejected }) => (
+                  <div
+                    key={doctor.id}
+                    onClick={() => setDoctorFilter(doctorFilter === doctor.id ? 'all' : doctor.id)}
+                    className={`flex items-center gap-3 rounded-lg border p-3 cursor-pointer transition-colors hover:bg-muted/50 ${doctorFilter === doctor.id ? 'ring-2 ring-primary border-primary' : ''}`}
+                  >
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={doctor.avatarUrl} />
+                      <AvatarFallback>{doctor.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">{doctor.name}</p>
+                      <div className="flex gap-2 mt-1">
+                        {total === 0 ? (
+                          <span className="text-xs text-muted-foreground">Nenhum documento</span>
+                        ) : (
+                          <>
+                            <Badge variant="outline" className="text-xs bg-success/15 text-success border-success/30">{approved} ✓</Badge>
+                            {pending > 0 && <Badge variant="outline" className="text-xs bg-warning/15 text-warning border-warning/30">{pending} ⏳</Badge>}
+                            {rejected > 0 && <Badge variant="outline" className="text-xs bg-destructive/15 text-destructive border-destructive/30">{rejected} ✗</Badge>}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Search & Filters */}
+        <div className="flex flex-col gap-4 sm:flex-row">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input placeholder="Buscar documentos ou médico..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
+          </div>
+          {!isDoctor && (
+            <Select value={doctorFilter} onValueChange={setDoctorFilter}>
+              <SelectTrigger className="w-full sm:w-[200px]"><Filter className="mr-2 h-4 w-4" /><SelectValue placeholder="Médico" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os médicos</SelectItem>
+                {doctorUsers.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )}
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os status</SelectItem>
+              <SelectItem value="pendente">Pendente</SelectItem>
+              <SelectItem value="aprovado">Aprovado</SelectItem>
+              <SelectItem value="rejeitado">Rejeitado</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Table */}
@@ -213,7 +319,9 @@ export default function Documents() {
               </TableHeader>
               <TableBody>
                 {filteredDocs.length === 0 ? (
-                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhum documento encontrado. Envie o primeiro!</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                    {isDoctor ? 'Você ainda não enviou documentos.' : 'Nenhum documento encontrado.'}
+                  </TableCell></TableRow>
                 ) : filteredDocs.map((doc) => {
                   const StatusIcon = statusIcons[doc.status];
                   return (
@@ -227,7 +335,14 @@ export default function Documents() {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="text-sm">{getUserName(doc.userId)}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {(() => { const u = getUser(doc.userId); return u ? (
+                            <><Avatar className="h-6 w-6"><AvatarImage src={u.avatarUrl} /><AvatarFallback className="text-xs">{u.name.charAt(0)}</AvatarFallback></Avatar>
+                            <span className="text-sm">{u.name}</span></>
+                          ) : <span className="text-sm text-muted-foreground">N/A</span>; })()}
+                        </div>
+                      </TableCell>
                       <TableCell><Badge variant="secondary">{categoryLabels[doc.category]}</Badge></TableCell>
                       <TableCell><Badge variant="outline" className={statusColors[doc.status]}><StatusIcon className="mr-1 h-3 w-3" />{statusLabels[doc.status]}</Badge></TableCell>
                       <TableCell>{doc.expirationDate || '—'}</TableCell>
@@ -237,14 +352,18 @@ export default function Documents() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => handlePreview(doc)}><Eye className="mr-2 h-4 w-4" />Visualizar</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleDownload(doc)}><Download className="mr-2 h-4 w-4" />Baixar</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => openDialog(doc)}><Pencil className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>
-                            {doc.status === 'pendente' && (
+                            {canEdit && (
+                              <DropdownMenuItem onClick={() => openDialog(doc)}><Pencil className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>
+                            )}
+                            {canApprove && doc.status === 'pendente' && (
                               <>
                                 <DropdownMenuItem onClick={() => handleStatusChange(doc, 'aprovado')}><CheckCircle className="mr-2 h-4 w-4" />Aprovar</DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleStatusChange(doc, 'rejeitado')}><XCircle className="mr-2 h-4 w-4" />Rejeitar</DropdownMenuItem>
                               </>
                             )}
-                            <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(doc)}><Trash2 className="mr-2 h-4 w-4" />Excluir</DropdownMenuItem>
+                            {canEdit && (
+                              <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(doc)}><Trash2 className="mr-2 h-4 w-4" />Excluir</DropdownMenuItem>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -304,12 +423,16 @@ export default function Documents() {
                 <FormField control={form.control} name="name" render={({ field }) => (
                   <FormItem><FormLabel>Nome</FormLabel><FormControl><Input {...field} placeholder="Ex: CRM - Dr. João" /></FormControl><FormMessage /></FormItem>
                 )} />
-                <FormField control={form.control} name="userId" render={({ field }) => (
-                  <FormItem><FormLabel>Usuário</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger></FormControl>
-                      <SelectContent>{users.map((u) => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}</SelectContent>
-                    </Select><FormMessage /></FormItem>
-                )} />
+                {isDoctor ? (
+                  <input type="hidden" {...form.register('userId')} />
+                ) : (
+                  <FormField control={form.control} name="userId" render={({ field }) => (
+                    <FormItem><FormLabel>Usuário</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger></FormControl>
+                        <SelectContent>{users.map((u) => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}</SelectContent>
+                      </Select><FormMessage /></FormItem>
+                  )} />
+                )}
                 <FormField control={form.control} name="category" render={({ field }) => (
                   <FormItem><FormLabel>Categoria</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
@@ -393,6 +516,16 @@ export default function Documents() {
               </div>
             </div>
             <DialogFooter>
+              {canApprove && previewDoc?.status === 'pendente' && (
+                <div className="flex gap-2 mr-auto">
+                  <Button variant="outline" className="gap-2 text-success border-success/30 hover:bg-success/10" onClick={() => { handleStatusChange(previewDoc, 'aprovado'); setPreviewOpen(false); }}>
+                    <CheckCircle className="h-4 w-4" />Aprovar
+                  </Button>
+                  <Button variant="outline" className="gap-2 text-destructive border-destructive/30 hover:bg-destructive/10" onClick={() => { handleStatusChange(previewDoc, 'rejeitado'); setPreviewOpen(false); }}>
+                    <XCircle className="h-4 w-4" />Rejeitar
+                  </Button>
+                </div>
+              )}
               <Button variant="outline" onClick={() => setPreviewOpen(false)}>Fechar</Button>
               {previewDoc && <Button onClick={() => handleDownload(previewDoc)} className="gap-2"><Download className="h-4 w-4" />Baixar</Button>}
             </DialogFooter>

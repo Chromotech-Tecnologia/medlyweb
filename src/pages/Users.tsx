@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Plus, Search, Filter, MoreHorizontal, Pencil, Trash2,
-  UserCheck, UserX, Eye, Loader2, ImageIcon, ShieldCheck, ShieldAlert,
+  UserCheck, UserX, Eye, Loader2, ImageIcon, ShieldCheck, ShieldAlert, FileText, CheckCircle, Clock, XCircle,
 } from 'lucide-react';
 import { validateCrm, type CrmValidationResult } from '@/lib/mocks/crmApi';
 import { MainLayout } from '@/components/layout';
@@ -21,7 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { initializeStorage, STORAGE_KEYS, getAll, create, update, softDelete } from '@/lib/mocks/storage';
-import type { UserProfile, Specialty } from '@/lib/mocks/types';
+import type { UserProfile, Specialty, Document } from '@/lib/mocks/types';
 import { useAuth } from '@/hooks/useAuth';
 import { userSchema, type UserFormData } from '@/lib/validations';
 
@@ -49,6 +49,7 @@ export default function Users() {
   const isDeveloper = currentUser?.role === 'developer';
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [specialties, setSpecialties] = useState<Specialty[]>([]);
+  const [documents, setDocuments] = useState<Document[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<UserProfile[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
@@ -76,13 +77,21 @@ export default function Users() {
 
   const loadData = () => {
     let data = getAll<UserProfile>(STORAGE_KEYS.USERS);
-    // Non-developer users cannot see developer users
     if (!isDeveloper) {
       data = data.filter(u => u.role !== 'developer');
     }
     setUsers(data);
     setFilteredUsers(data);
     setSpecialties(getAll<Specialty>(STORAGE_KEYS.SPECIALTIES));
+    setDocuments(getAll<Document>(STORAGE_KEYS.DOCUMENTS));
+  };
+
+  const getDoctorDocStatus = (userId: string) => {
+    const docs = documents.filter(d => d.userId === userId);
+    const approved = docs.filter(d => d.status === 'aprovado').length;
+    const pending = docs.filter(d => d.status === 'pendente').length;
+    const rejected = docs.filter(d => d.status === 'rejeitado').length;
+    return { total: docs.length, approved, pending, rejected };
   };
 
   useEffect(() => {
@@ -216,7 +225,7 @@ export default function Users() {
                     <TableHead>Usuário</TableHead>
                     <TableHead>Perfil</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead className="hidden md:table-cell">Telefone</TableHead>
+                    <TableHead className="hidden md:table-cell">Documentos</TableHead>
                     <TableHead className="hidden lg:table-cell">Avaliação</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
@@ -232,7 +241,20 @@ export default function Users() {
                       </TableCell>
                       <TableCell><Badge variant="secondary">{roleLabels[user.role]}</Badge></TableCell>
                       <TableCell><Badge variant="outline" className={statusColors[user.status]}>{statusLabels[user.status]}</Badge></TableCell>
-                      <TableCell className="hidden md:table-cell">{user.phone}</TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {user.role === 'medico' ? (() => {
+                          const ds = getDoctorDocStatus(user.id);
+                          return ds.total === 0 ? (
+                            <span className="text-xs text-muted-foreground">Sem docs</span>
+                          ) : (
+                            <div className="flex gap-1">
+                              {ds.approved > 0 && <Badge variant="outline" className="text-xs bg-success/15 text-success border-success/30">{ds.approved} <CheckCircle className="ml-0.5 h-3 w-3" /></Badge>}
+                              {ds.pending > 0 && <Badge variant="outline" className="text-xs bg-warning/15 text-warning border-warning/30">{ds.pending} <Clock className="ml-0.5 h-3 w-3" /></Badge>}
+                              {ds.rejected > 0 && <Badge variant="outline" className="text-xs bg-destructive/15 text-destructive border-destructive/30">{ds.rejected} <XCircle className="ml-0.5 h-3 w-3" /></Badge>}
+                            </div>
+                          );
+                        })() : <span className="text-muted-foreground">—</span>}
+                      </TableCell>
                       <TableCell className="hidden lg:table-cell">
                         {user.averageRating ? (<div className="flex items-center gap-1"><span className="text-warning">★</span><span>{user.averageRating.toFixed(1)}</span></div>) : <span className="text-muted-foreground">—</span>}
                       </TableCell>
@@ -438,17 +460,38 @@ export default function Users() {
 
         {/* Details Dialog */}
         <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
-          <DialogContent className="sm:max-w-lg">
+          <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>Detalhes do Usuário</DialogTitle></DialogHeader>
             {selectedUser && (
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
                   <Avatar className="h-16 w-16"><AvatarImage src={selectedUser.avatarUrl} /><AvatarFallback className="text-lg">{selectedUser.name.charAt(0)}</AvatarFallback></Avatar>
-                  <div><h3 className="text-lg font-semibold">{selectedUser.name}</h3><p className="text-muted-foreground">{selectedUser.email}</p></div>
+                  <div>
+                    <h3 className="text-lg font-semibold">{selectedUser.name}</h3>
+                    <p className="text-muted-foreground">{selectedUser.email}</p>
+                  </div>
                 </div>
                 <div className="grid gap-3 rounded-lg border p-4">
                   <div className="flex justify-between"><span className="text-muted-foreground">Perfil</span><Badge variant="secondary">{roleLabels[selectedUser.role]}</Badge></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Status</span><Badge variant="outline" className={statusColors[selectedUser.status]}>{statusLabels[selectedUser.status]}</Badge></div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Status</span>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className={statusColors[selectedUser.status]}>{statusLabels[selectedUser.status]}</Badge>
+                      {(currentUser?.role === 'admin' || currentUser?.role === 'developer') && selectedUser.role === 'medico' && (
+                        <Button
+                          size="sm"
+                          variant={selectedUser.status === 'ativo' ? 'destructive' : 'default'}
+                          className="h-7 text-xs"
+                          onClick={() => {
+                            toggleStatus(selectedUser);
+                            setSelectedUser({ ...selectedUser, status: selectedUser.status === 'ativo' ? 'inativo' : 'ativo' });
+                          }}
+                        >
+                          {selectedUser.status === 'ativo' ? <><UserX className="mr-1 h-3 w-3" />Desativar</> : <><UserCheck className="mr-1 h-3 w-3" />Ativar</>}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Telefone</span><span>{selectedUser.phone}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">CPF</span><span>{selectedUser.cpf}</span></div>
                   {selectedUser.crm && <div className="flex justify-between"><span className="text-muted-foreground">CRM</span><span>{selectedUser.crm}/{selectedUser.crmState}</span></div>}
@@ -465,6 +508,69 @@ export default function Users() {
                   )}
                   <div className="flex justify-between"><span className="text-muted-foreground">Escalas concluídas</span><span>{selectedUser.completedScales || 0}</span></div>
                 </div>
+
+                {/* Doctor Documents Section */}
+                {selectedUser.role === 'medico' && (() => {
+                  const ds = getDoctorDocStatus(selectedUser.id);
+                  const userDocs = documents.filter(d => d.userId === selectedUser.id);
+                  return (
+                    <div className="space-y-3">
+                      <h4 className="font-semibold flex items-center gap-2"><FileText className="h-4 w-4" />Documentos ({ds.total})</h4>
+                      {ds.total === 0 ? (
+                        <p className="text-sm text-muted-foreground rounded-lg border p-4 text-center">Nenhum documento enviado</p>
+                      ) : (
+                        <>
+                          <div className="flex gap-2">
+                            <Badge variant="outline" className="bg-success/15 text-success border-success/30">{ds.approved} aprovado{ds.approved !== 1 ? 's' : ''}</Badge>
+                            <Badge variant="outline" className="bg-warning/15 text-warning border-warning/30">{ds.pending} pendente{ds.pending !== 1 ? 's' : ''}</Badge>
+                            {ds.rejected > 0 && <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/30">{ds.rejected} rejeitado{ds.rejected !== 1 ? 's' : ''}</Badge>}
+                          </div>
+                          <div className="grid gap-2 rounded-lg border p-3">
+                            {userDocs.map(doc => (
+                              <div key={doc.id} className="flex items-center justify-between text-sm">
+                                <div className="flex items-center gap-2">
+                                  <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                                  <span>{doc.name}</span>
+                                </div>
+                                <Badge variant="outline" className={`text-xs ${statusColors[doc.status]}`}>
+                                  {statusLabels[doc.status]}
+                                </Badge>
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      )}
+
+                      {/* Activation guidance for admin */}
+                      {(currentUser?.role === 'admin' || currentUser?.role === 'developer') && selectedUser.status === 'pendente' && (
+                        <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
+                          <p className="text-sm font-medium">Ativação do médico</p>
+                          <p className="text-xs text-muted-foreground">
+                            {ds.total === 0
+                              ? 'O médico ainda não enviou documentos. Aguarde o envio para validar.'
+                              : ds.pending > 0
+                              ? `Há ${ds.pending} documento(s) pendente(s) de aprovação. Revise antes de ativar.`
+                              : ds.rejected > 0
+                              ? 'Alguns documentos foram rejeitados. Verifique antes de ativar.'
+                              : 'Todos os documentos foram aprovados. O médico pode ser ativado.'}
+                          </p>
+                          {ds.approved > 0 && ds.pending === 0 && (
+                            <Button
+                              size="sm"
+                              className="w-full gap-2"
+                              onClick={() => {
+                                toggleStatus(selectedUser);
+                                setSelectedUser({ ...selectedUser, status: 'ativo' });
+                              }}
+                            >
+                              <UserCheck className="h-4 w-4" />Ativar médico para ver escalas
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             )}
           </DialogContent>
