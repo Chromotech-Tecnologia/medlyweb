@@ -460,17 +460,38 @@ export default function Users() {
 
         {/* Details Dialog */}
         <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
-          <DialogContent className="sm:max-w-lg">
+          <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>Detalhes do Usuário</DialogTitle></DialogHeader>
             {selectedUser && (
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
                   <Avatar className="h-16 w-16"><AvatarImage src={selectedUser.avatarUrl} /><AvatarFallback className="text-lg">{selectedUser.name.charAt(0)}</AvatarFallback></Avatar>
-                  <div><h3 className="text-lg font-semibold">{selectedUser.name}</h3><p className="text-muted-foreground">{selectedUser.email}</p></div>
+                  <div>
+                    <h3 className="text-lg font-semibold">{selectedUser.name}</h3>
+                    <p className="text-muted-foreground">{selectedUser.email}</p>
+                  </div>
                 </div>
                 <div className="grid gap-3 rounded-lg border p-4">
                   <div className="flex justify-between"><span className="text-muted-foreground">Perfil</span><Badge variant="secondary">{roleLabels[selectedUser.role]}</Badge></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Status</span><Badge variant="outline" className={statusColors[selectedUser.status]}>{statusLabels[selectedUser.status]}</Badge></div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Status</span>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className={statusColors[selectedUser.status]}>{statusLabels[selectedUser.status]}</Badge>
+                      {(currentUser?.role === 'admin' || currentUser?.role === 'developer') && selectedUser.role === 'medico' && (
+                        <Button
+                          size="sm"
+                          variant={selectedUser.status === 'ativo' ? 'destructive' : 'default'}
+                          className="h-7 text-xs"
+                          onClick={() => {
+                            toggleStatus(selectedUser);
+                            setSelectedUser({ ...selectedUser, status: selectedUser.status === 'ativo' ? 'inativo' : 'ativo' });
+                          }}
+                        >
+                          {selectedUser.status === 'ativo' ? <><UserX className="mr-1 h-3 w-3" />Desativar</> : <><UserCheck className="mr-1 h-3 w-3" />Ativar</>}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Telefone</span><span>{selectedUser.phone}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">CPF</span><span>{selectedUser.cpf}</span></div>
                   {selectedUser.crm && <div className="flex justify-between"><span className="text-muted-foreground">CRM</span><span>{selectedUser.crm}/{selectedUser.crmState}</span></div>}
@@ -487,6 +508,69 @@ export default function Users() {
                   )}
                   <div className="flex justify-between"><span className="text-muted-foreground">Escalas concluídas</span><span>{selectedUser.completedScales || 0}</span></div>
                 </div>
+
+                {/* Doctor Documents Section */}
+                {selectedUser.role === 'medico' && (() => {
+                  const ds = getDoctorDocStatus(selectedUser.id);
+                  const userDocs = documents.filter(d => d.userId === selectedUser.id);
+                  return (
+                    <div className="space-y-3">
+                      <h4 className="font-semibold flex items-center gap-2"><FileText className="h-4 w-4" />Documentos ({ds.total})</h4>
+                      {ds.total === 0 ? (
+                        <p className="text-sm text-muted-foreground rounded-lg border p-4 text-center">Nenhum documento enviado</p>
+                      ) : (
+                        <>
+                          <div className="flex gap-2">
+                            <Badge variant="outline" className="bg-success/15 text-success border-success/30">{ds.approved} aprovado{ds.approved !== 1 ? 's' : ''}</Badge>
+                            <Badge variant="outline" className="bg-warning/15 text-warning border-warning/30">{ds.pending} pendente{ds.pending !== 1 ? 's' : ''}</Badge>
+                            {ds.rejected > 0 && <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/30">{ds.rejected} rejeitado{ds.rejected !== 1 ? 's' : ''}</Badge>}
+                          </div>
+                          <div className="grid gap-2 rounded-lg border p-3">
+                            {userDocs.map(doc => (
+                              <div key={doc.id} className="flex items-center justify-between text-sm">
+                                <div className="flex items-center gap-2">
+                                  <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                                  <span>{doc.name}</span>
+                                </div>
+                                <Badge variant="outline" className={`text-xs ${statusColors[doc.status]}`}>
+                                  {statusLabels[doc.status]}
+                                </Badge>
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      )}
+
+                      {/* Activation guidance for admin */}
+                      {(currentUser?.role === 'admin' || currentUser?.role === 'developer') && selectedUser.status === 'pendente' && (
+                        <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
+                          <p className="text-sm font-medium">Ativação do médico</p>
+                          <p className="text-xs text-muted-foreground">
+                            {ds.total === 0
+                              ? 'O médico ainda não enviou documentos. Aguarde o envio para validar.'
+                              : ds.pending > 0
+                              ? `Há ${ds.pending} documento(s) pendente(s) de aprovação. Revise antes de ativar.`
+                              : ds.rejected > 0
+                              ? 'Alguns documentos foram rejeitados. Verifique antes de ativar.'
+                              : 'Todos os documentos foram aprovados. O médico pode ser ativado.'}
+                          </p>
+                          {ds.approved > 0 && ds.pending === 0 && (
+                            <Button
+                              size="sm"
+                              className="w-full gap-2"
+                              onClick={() => {
+                                toggleStatus(selectedUser);
+                                setSelectedUser({ ...selectedUser, status: 'ativo' });
+                              }}
+                            >
+                              <UserCheck className="h-4 w-4" />Ativar médico para ver escalas
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             )}
           </DialogContent>
