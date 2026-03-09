@@ -351,6 +351,53 @@ export default function Documents() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Preview Dialog */}
+        <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+          <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Eye className="h-5 w-5" />
+                {previewDoc?.name}
+              </DialogTitle>
+              <DialogDescription>
+                {categoryLabels[previewDoc?.category || 'outro']} • {getUserName(previewDoc?.userId || '')}
+                {previewDoc?.expirationDate && ` • Validade: ${previewDoc.expirationDate}`}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              {previewDoc?.fileUrl && previewDoc.fileUrl !== '#mock-file' ? (
+                <div className="rounded-lg border overflow-hidden">
+                  {isImageFile(previewDoc.fileUrl) ? (
+                    <img src={previewDoc.fileUrl} alt={previewDoc.name} className="w-full max-h-[60vh] object-contain bg-muted" />
+                  ) : isPdfFile(previewDoc.fileUrl) ? (
+                    <iframe src={previewDoc.fileUrl} className="w-full h-[60vh]" title={previewDoc.name} />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center gap-3 p-12 text-muted-foreground">
+                      <File className="h-16 w-16" />
+                      <p className="text-sm">Pré-visualização não disponível para este tipo de arquivo.</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center gap-3 rounded-lg border p-12 text-muted-foreground">
+                  <FileText className="h-16 w-16" />
+                  <p className="text-sm">Nenhum arquivo anexado a este documento.</p>
+                </div>
+              )}
+
+              <div className="grid gap-2 rounded-lg border p-4 text-sm">
+                <div className="flex justify-between"><span className="text-muted-foreground">Status</span><Badge variant="outline" className={statusColors[previewDoc?.status || 'pendente']}>{statusLabels[previewDoc?.status || 'pendente']}</Badge></div>
+                {previewDoc?.reviewNotes && <div className="flex justify-between"><span className="text-muted-foreground">Observações</span><span className="text-right max-w-[60%]">{previewDoc.reviewNotes}</span></div>}
+                <div className="flex justify-between"><span className="text-muted-foreground">Criado em</span><span>{previewDoc?.createdAt ? new Date(previewDoc.createdAt).toLocaleDateString('pt-BR') : '—'}</span></div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setPreviewOpen(false)}>Fechar</Button>
+              {previewDoc && <Button onClick={() => handleDownload(previewDoc)} className="gap-2"><Download className="h-4 w-4" />Baixar</Button>}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </motion.div>
     </MainLayout>
   );
