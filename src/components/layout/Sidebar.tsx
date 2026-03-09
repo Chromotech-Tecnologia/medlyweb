@@ -52,6 +52,13 @@ interface SidebarProps {
 
 export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   const location = useLocation();
+  const { user } = useAuth();
+  const isDeveloper = user?.role === 'developer';
+
+  const allNavItems = [
+    ...navItems,
+    ...(isDeveloper ? [{ icon: Code, label: 'Dev Tools', href: '/dev-tools' }] : []),
+  ];
 
   return (
     <motion.aside
