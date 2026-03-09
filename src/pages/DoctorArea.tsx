@@ -1,33 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MainLayout } from '@/components/layout';
 import { useAuth } from '@/hooks/useAuth';
 import {
-  Calendar,
-  Clock,
-  MapPin,
-  DollarSign,
-  Star,
-  TrendingUp,
-  CreditCard,
-  ChevronRight,
-  Search,
-  Filter,
-  List,
-  CalendarDays,
-  ArrowLeft,
-  Navigation,
-  CheckCircle2,
-  Bell,
-  BellDot,
-  CheckCheck,
-  FileText,
-  Send,
-  User,
-  Shield,
-  Mail,
-  Phone,
-  Edit,
+  Calendar, Clock, MapPin, DollarSign, Star, TrendingUp, CreditCard,
+  ChevronRight, Search, Filter, List, CalendarDays, ArrowLeft, Navigation,
+  CheckCircle2, Bell, BellDot, CheckCheck, FileText, Send, User, Shield,
+  Mail, Phone, Edit,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,6 +14,14 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
+import { usePeriodicGeolocation } from '@/hooks/useGeolocation';
+import { CheckInOut } from '@/components/doctor/CheckInOut';
+import { ScaleActions } from '@/components/doctor/ScaleActions';
+import { getGoogleMapsUrl } from '@/lib/scaleUtils';
+import { STORAGE_KEYS, getAll, update, getById } from '@/lib/mocks/storage';
+import type { Scale, Location, CheckRecord } from '@/lib/mocks/types';
+import type { CheckoutFormData } from '@/lib/validations';
 
 // Types
 type DoctorTab = 'inicio' | 'escalas' | 'alertas' | 'perfil';
@@ -44,6 +31,7 @@ interface DoctorScale {
   id: string;
   title: string;
   location: string;
+  locationId: string;
   address: string;
   city: string;
   date: string;
@@ -54,6 +42,14 @@ interface DoctorScale {
   status: 'confirmado' | 'aguardando' | 'disponivel';
   specialty: string;
   workflowSteps?: { label: string; done: boolean }[];
+  // Real scale data
+  coordinates?: { lat: number; lng: number };
+  checkIn?: CheckRecord;
+  checkOut?: CheckRecord;
+  cancellationDeadlineDays: number;
+  transferDeadlineDays: number;
+  paymentValue: number;
+  realScaleId?: string;
 }
 
 interface DoctorNotification {
@@ -65,82 +61,7 @@ interface DoctorNotification {
   icon: 'calendar' | 'payment' | 'document' | 'scale';
 }
 
-// Mock data
-const mockDoctorScales: DoctorScale[] = [
-  {
-    id: '1',
-    title: 'Plantão UTI - Hospital São Lucas',
-    location: 'Hospital São Lucas',
-    address: 'Rua das Flores, 123 - Centro',
-    city: 'São Paulo, SP',
-    date: '22/02/2026',
-    startTime: '07:00',
-    endTime: '19:00',
-    duration: '12h',
-    value: 1500,
-    status: 'confirmado',
-    specialty: 'Clínica Geral',
-    workflowSteps: [
-      { label: 'Candidatura', done: true },
-      { label: 'Aguardando Aceite', done: true },
-      { label: 'Documentos', done: true },
-      { label: 'Análise', done: true },
-      { label: 'Aprovado', done: true },
-      { label: 'NF Recebida', done: false },
-    ],
-  },
-  {
-    id: '2',
-    title: 'Plantão PS - UPA Centro',
-    location: 'UPA Centro',
-    address: 'Av. Central, 500',
-    city: 'São Paulo, SP',
-    date: '23/02/2026',
-    startTime: '19:00',
-    endTime: '07:00',
-    duration: '12h',
-    value: 1800,
-    status: 'aguardando',
-    specialty: 'Clínica Geral',
-    workflowSteps: [
-      { label: 'Candidatura', done: true },
-      { label: 'Aguardando Aceite', done: false },
-      { label: 'Documentos', done: false },
-      { label: 'Análise', done: false },
-      { label: 'Aprovado', done: false },
-      { label: 'NF Recebida', done: false },
-    ],
-  },
-  {
-    id: '3',
-    title: 'Atendimento Ambulatorial',
-    location: 'Clínica Saúde & Vida',
-    address: 'Rua da Saúde, 200',
-    city: 'São Paulo, SP',
-    date: '01/03/2026',
-    startTime: '08:00',
-    endTime: '14:00',
-    duration: '6h',
-    value: 900,
-    status: 'disponivel',
-    specialty: 'Cardiologia',
-  },
-  {
-    id: '4',
-    title: 'Plantão Pediatria',
-    location: 'Hospital Infantil',
-    address: 'Rua das Crianças, 50',
-    city: 'São Paulo, SP',
-    date: '01/03/2026',
-    startTime: '07:00',
-    endTime: '19:00',
-    duration: '12h',
-    value: 1600,
-    status: 'disponivel',
-    specialty: 'Pediatria',
-  },
-];
-
+// Mock notifications
 const mockNotifications: DoctorNotification[] = [
   { id: '1', title: 'Lembrete de Check-in', message: 'Seu plantão no Hospital São Lucas começa em 30 minutos. Não esqueça de fazer o check-in!', time: 'há cerca de 1 hora', read: false, icon: 'calendar' },
   { id: '2', title: 'Escala Confirmada', message: 'Sua candidatura para o Plantão PS na UPA Centro foi aceita!', time: 'há 1 dia', read: false, icon: 'scale' },
@@ -161,21 +82,139 @@ const statusLabels: Record<string, string> = {
   disponivel: 'Disponível',
 };
 
+// Build doctor scales from real storage data + fallback mock
+function buildDoctorScales(): DoctorScale[] {
+  const scales = getAll<Scale>(STORAGE_KEYS.SCALES);
+  const locations = getAll<Location>(STORAGE_KEYS.LOCATIONS);
+
+  const assignedScales: DoctorScale[] = scales
+    .filter(s => s.assignedDoctorId === '4' && s.status !== 'cancelada')
+    .map(s => {
+      const loc = locations.find(l => l.id === s.locationId);
+      return {
+        id: s.id,
+        realScaleId: s.id,
+        title: s.title,
+        location: loc?.name || 'N/A',
+        locationId: s.locationId,
+        address: loc ? `${loc.address.street}, ${loc.address.number}` : '',
+        city: loc ? `${loc.address.city}, ${loc.address.state}` : '',
+        date: new Date(s.date).toLocaleDateString('pt-BR'),
+        startTime: s.startTime,
+        endTime: s.endTime,
+        duration: '12h',
+        value: s.paymentValue,
+        status: 'confirmado' as const,
+        specialty: 'Especialidade',
+        coordinates: loc?.coordinates,
+        checkIn: s.checkIn,
+        checkOut: s.checkOut,
+        cancellationDeadlineDays: s.cancellationDeadlineDays,
+        transferDeadlineDays: s.transferDeadlineDays,
+        paymentValue: s.paymentValue,
+        workflowSteps: [
+          { label: 'Candidatura', done: true },
+          { label: 'Aguardando Aceite', done: true },
+          { label: 'Documentos', done: true },
+          { label: 'Análise', done: true },
+          { label: 'Aprovado', done: true },
+          { label: 'NF Recebida', done: false },
+        ],
+      };
+    });
+
+  // Add mock data for demo
+  const mockScales: DoctorScale[] = [
+    {
+      id: 'mock-1',
+      title: 'Plantão UTI - Hospital São Lucas',
+      location: 'Hospital São Lucas',
+      locationId: '2',
+      address: 'Rua das Flores, 123 - Centro',
+      city: 'São Paulo, SP',
+      date: '22/03/2026',
+      startTime: '07:00',
+      endTime: '19:00',
+      duration: '12h',
+      value: 1500,
+      status: 'confirmado',
+      specialty: 'Clínica Geral',
+      coordinates: { lat: -23.5489, lng: -46.6558 },
+      cancellationDeadlineDays: 3,
+      transferDeadlineDays: 2,
+      paymentValue: 1500,
+      workflowSteps: [
+        { label: 'Candidatura', done: true },
+        { label: 'Aguardando Aceite', done: true },
+        { label: 'Documentos', done: true },
+        { label: 'Análise', done: true },
+        { label: 'Aprovado', done: true },
+        { label: 'NF Recebida', done: false },
+      ],
+    },
+    {
+      id: 'mock-2',
+      title: 'Plantão PS - UPA Centro',
+      location: 'UPA Centro',
+      locationId: '1',
+      address: 'Av. Central, 500',
+      city: 'São Paulo, SP',
+      date: '23/03/2026',
+      startTime: '19:00',
+      endTime: '07:00',
+      duration: '12h',
+      value: 1800,
+      status: 'aguardando',
+      specialty: 'Clínica Geral',
+      coordinates: { lat: -23.5005, lng: -46.6275 },
+      cancellationDeadlineDays: 3,
+      transferDeadlineDays: 2,
+      paymentValue: 1800,
+      workflowSteps: [
+        { label: 'Candidatura', done: true },
+        { label: 'Aguardando Aceite', done: false },
+      ],
+    },
+    {
+      id: 'mock-3',
+      title: 'Atendimento Ambulatorial',
+      location: 'Clínica Saúde & Vida',
+      locationId: '3',
+      address: 'Rua da Saúde, 200',
+      city: 'São Paulo, SP',
+      date: '01/04/2026',
+      startTime: '08:00',
+      endTime: '14:00',
+      duration: '6h',
+      value: 900,
+      status: 'disponivel',
+      specialty: 'Cardiologia',
+      coordinates: { lat: -23.5883, lng: -46.6358 },
+      cancellationDeadlineDays: 2,
+      transferDeadlineDays: 1,
+      paymentValue: 900,
+    },
+  ];
+
+  // Merge: real assigned scales first, then mock ones that don't conflict
+  const realIds = new Set(assignedScales.map(s => s.id));
+  return [...assignedScales, ...mockScales.filter(m => !realIds.has(m.id))];
+}
+
 // Sub-components
 function DoctorHome({ onViewScale, onNavigate }: { onViewScale: (s: DoctorScale) => void; onNavigate: (tab: DoctorTab) => void }) {
   const { user } = useAuth();
-  const nextScale = mockDoctorScales.find(s => s.status === 'confirmado');
+  const doctorScales = buildDoctorScales();
+  const nextScale = doctorScales.find(s => s.status === 'confirmado');
   const greeting = new Date().getHours() < 12 ? 'Bom dia' : new Date().getHours() < 18 ? 'Boa tarde' : 'Boa noite';
 
   return (
     <div className="space-y-6">
-      {/* Greeting */}
       <div>
         <p className="text-sm text-muted-foreground">{greeting},</p>
         <h1 className="text-2xl font-bold text-foreground">Dr. {user?.name?.split(' ')[0] || 'Médico'}</h1>
       </div>
 
-      {/* Next Shift Card */}
       {nextScale && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -199,26 +238,20 @@ function DoctorHome({ onViewScale, onNavigate }: { onViewScale: (s: DoctorScale)
               </p>
             </div>
             <Button size="sm" variant="outline" className="bg-background/90 hover:bg-background border-0 text-foreground font-medium">
-              Fazer Check-in
+              {nextScale.checkIn ? 'Ver Plantão' : 'Fazer Check-in'}
             </Button>
           </div>
         </motion.div>
       )}
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-4">
         {[
-          { icon: Calendar, value: '1', label: 'Escalas Ativas', color: 'text-primary' },
+          { icon: Calendar, value: String(doctorScales.filter(s => s.status === 'confirmado').length), label: 'Escalas Ativas', color: 'text-primary' },
           { icon: CreditCard, value: '2', label: 'Pagamentos pendentes', color: 'text-warning' },
           { icon: Star, value: '4.8', label: 'Sua Nota', color: 'text-primary' },
           { icon: TrendingUp, value: '48', label: 'Total Plantões', color: 'text-primary' },
         ].map((stat, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05 }}
-          >
+          <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
             <Card className="glass-card hover:shadow-soft transition-shadow">
               <CardContent className="p-4">
                 <stat.icon className={cn('h-6 w-6 mb-2', stat.color)} />
@@ -230,7 +263,6 @@ function DoctorHome({ onViewScale, onNavigate }: { onViewScale: (s: DoctorScale)
         ))}
       </div>
 
-      {/* Quick Actions */}
       <div>
         <h3 className="text-sm font-semibold text-primary mb-3">Ações Rápidas</h3>
         <div className="space-y-2">
@@ -255,7 +287,6 @@ function DoctorHome({ onViewScale, onNavigate }: { onViewScale: (s: DoctorScale)
         </div>
       </div>
 
-      {/* Recent Alerts */}
       <div>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold text-primary">Alertas Recentes</h3>
@@ -284,8 +315,9 @@ function DoctorHome({ onViewScale, onNavigate }: { onViewScale: (s: DoctorScale)
 function ScalesList({ onViewScale }: { onViewScale: (s: DoctorScale) => void }) {
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<ScaleViewMode>('list');
+  const doctorScales = buildDoctorScales();
 
-  const filtered = mockDoctorScales.filter(s =>
+  const filtered = doctorScales.filter(s =>
     s.title.toLowerCase().includes(search.toLowerCase()) ||
     s.location.toLowerCase().includes(search.toLowerCase())
   );
@@ -317,38 +349,32 @@ function ScalesList({ onViewScale }: { onViewScale: (s: DoctorScale) => void }) 
 
       <div className="space-y-3">
         {filtered.map((scale, i) => (
-          <motion.div
-            key={scale.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05 }}
-          >
+          <motion.div key={scale.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
             <Card className="glass-card cursor-pointer hover:shadow-soft transition-shadow" onClick={() => onViewScale(scale)}>
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex gap-2">
                     <Badge className={cn('text-xs', statusColors[scale.status])}>{statusLabels[scale.status]}</Badge>
                     <Badge variant="outline" className="text-xs">{scale.specialty}</Badge>
+                    {scale.checkIn && !scale.checkOut && (
+                      <Badge className="text-xs bg-primary/15 text-primary border-primary/30">Em plantão</Badge>
+                    )}
                   </div>
                   <ChevronRight className="h-4 w-4 text-muted-foreground" />
                 </div>
                 <p className="font-semibold text-foreground mb-2">{scale.title}</p>
                 <div className="grid grid-cols-2 gap-y-1">
                   <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                    <MapPin className="h-3.5 w-3.5" />
-                    {scale.location}
+                    <MapPin className="h-3.5 w-3.5" />{scale.location}
                   </div>
                   <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                    <Clock className="h-3.5 w-3.5" />
-                    {scale.startTime} - {scale.endTime}
+                    <Clock className="h-3.5 w-3.5" />{scale.startTime} - {scale.endTime}
                   </div>
                   <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                    <Calendar className="h-3.5 w-3.5" />
-                    {scale.date}
+                    <Calendar className="h-3.5 w-3.5" />{scale.date}
                   </div>
                   <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
-                    <DollarSign className="h-3.5 w-3.5" />
-                    R$ {scale.value.toLocaleString('pt-BR')}
+                    <DollarSign className="h-3.5 w-3.5" />R$ {scale.value.toLocaleString('pt-BR')}
                   </div>
                 </div>
                 {scale.status === 'disponivel' && (
@@ -366,17 +392,120 @@ function ScalesList({ onViewScale }: { onViewScale: (s: DoctorScale) => void }) 
   );
 }
 
-function ScaleDetail({ scale, onBack }: { scale: DoctorScale; onBack: () => void }) {
+function ScaleDetail({ scale, onBack, onScaleUpdate }: { scale: DoctorScale; onBack: () => void; onScaleUpdate: () => void }) {
+  const { toast } = useToast();
+  const [currentScale, setCurrentScale] = useState(scale);
+  
+  // Periodic geolocation for after check-in
+  const periodicGeo = usePeriodicGeolocation(5 * 60 * 1000); // 5 min
+
+  const locationCoords = currentScale.coordinates || { lat: -23.5505, lng: -46.6333 };
+
+  // Start periodic verification after check-in
+  useEffect(() => {
+    if (currentScale.checkIn && !currentScale.checkOut) {
+      periodicGeo.enableMock(); // Use mock for demo
+      periodicGeo.startVerification();
+    }
+    return () => periodicGeo.stopVerification();
+  }, [currentScale.checkIn, currentScale.checkOut]);
+
+  const isWithinRadiusNow = periodicGeo.coordinates
+    ? periodicGeo.isWithinRadius(locationCoords.lat, locationCoords.lng, 100)
+    : undefined;
+
+  const handleCheckIn = (coordinates: { lat: number; lng: number }) => {
+    const checkInRecord: CheckRecord = {
+      timestamp: new Date().toISOString(),
+      coordinates,
+      verified: true,
+    };
+
+    // Update real scale if it exists
+    if (currentScale.realScaleId) {
+      update(STORAGE_KEYS.SCALES, currentScale.realScaleId, { checkIn: checkInRecord, status: 'em_andamento' });
+    }
+
+    setCurrentScale(prev => ({ ...prev, checkIn: checkInRecord }));
+    toast({ title: 'Check-in realizado!', description: `Check-in em ${currentScale.location} às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` });
+  };
+
+  const handleCheckOut = (data: CheckoutFormData, coordinates: { lat: number; lng: number }) => {
+    const checkOutRecord: CheckRecord = {
+      timestamp: new Date().toISOString(),
+      coordinates,
+      verified: true,
+    };
+
+    if (currentScale.realScaleId) {
+      update(STORAGE_KEYS.SCALES, currentScale.realScaleId, { checkOut: checkOutRecord, status: 'concluida' });
+    }
+
+    periodicGeo.stopVerification();
+    setCurrentScale(prev => ({ ...prev, checkOut: checkOutRecord }));
+    toast({ title: 'Check-out realizado!', description: `Plantão concluído. ${data.patientsAttended} pacientes atendidos. Nota: ${data.overallScore}/5` });
+  };
+
+  const handleCancel = (scaleId: string, penaltyAmount: number) => {
+    if (currentScale.realScaleId) {
+      update(STORAGE_KEYS.SCALES, currentScale.realScaleId, { status: 'cancelada', assignedDoctorId: null });
+    }
+    toast({
+      title: 'Desistência confirmada',
+      description: penaltyAmount > 0
+        ? `Multa de R$ ${penaltyAmount.toLocaleString('pt-BR')} será aplicada.`
+        : 'Sem penalidade — dentro do prazo.',
+      variant: penaltyAmount > 0 ? 'destructive' : 'default',
+    });
+    onBack();
+    onScaleUpdate();
+  };
+
+  const handleTransfer = (scaleId: string) => {
+    if (currentScale.realScaleId) {
+      update(STORAGE_KEYS.SCALES, currentScale.realScaleId, { status: 'publicada', assignedDoctorId: null });
+    }
+    toast({ title: 'Plantão repassado', description: 'A escala voltou a ficar disponível para outros médicos.' });
+    onBack();
+    onScaleUpdate();
+  };
+
+  // Build a minimal Scale object for ScaleActions
+  const scaleForActions: Scale = {
+    id: currentScale.realScaleId || currentScale.id,
+    title: currentScale.title,
+    date: (() => {
+      // Parse dd/MM/yyyy to ISO
+      const parts = currentScale.date.split('/');
+      if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
+      return currentScale.date;
+    })(),
+    startTime: currentScale.startTime,
+    endTime: currentScale.endTime,
+    cancellationDeadlineDays: currentScale.cancellationDeadlineDays,
+    transferDeadlineDays: currentScale.transferDeadlineDays,
+    paymentValue: currentScale.paymentValue,
+    locationId: currentScale.locationId,
+    scaleTypeId: '',
+    specialtyId: '',
+    shift: 'plantao_12h',
+    status: 'em_andamento',
+    paymentStatus: 'pendente',
+    createdAt: '',
+    updatedAt: '',
+    deletedAt: null,
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={onBack}><ArrowLeft className="h-5 w-5" /></Button>
-        <h1 className="text-lg font-bold">{scale.title}</h1>
+        <h1 className="text-lg font-bold">{currentScale.title}</h1>
       </div>
 
       <div className="flex gap-2">
-        <Badge className={cn('text-xs', statusColors[scale.status])}>{statusLabels[scale.status]}</Badge>
-        <Badge variant="outline" className="text-xs">{scale.specialty}</Badge>
+        <Badge className={cn('text-xs', statusColors[currentScale.status])}>{statusLabels[currentScale.status]}</Badge>
+        <Badge variant="outline" className="text-xs">{currentScale.specialty}</Badge>
       </div>
 
       {/* Location Card */}
@@ -386,53 +515,55 @@ function ScaleDetail({ scale, onBack }: { scale: DoctorScale; onBack: () => void
             <div className="flex items-start gap-3">
               <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
               <div>
-                <p className="font-semibold">{scale.location}</p>
-                <p className="text-sm text-muted-foreground">{scale.address}</p>
-                <p className="text-sm text-muted-foreground">{scale.city}</p>
+                <p className="font-semibold">{currentScale.location}</p>
+                <p className="text-sm text-muted-foreground">{currentScale.address}</p>
+                <p className="text-sm text-muted-foreground">{currentScale.city}</p>
               </div>
             </div>
-            <Button variant="outline" size="sm" className="gap-1.5">
-              <Navigation className="h-3.5 w-3.5" />
-              Mapa
-            </Button>
+            <a
+              href={getGoogleMapsUrl(locationCoords.lat, locationCoords.lng)}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button variant="outline" size="sm" className="gap-1.5">
+                <Navigation className="h-3.5 w-3.5" />
+                Mapa
+              </Button>
+            </a>
           </div>
 
           <div className="mt-4 flex items-center justify-between border-t pt-3">
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-              <Calendar className="h-4 w-4" />
-              {scale.date}
+              <Calendar className="h-4 w-4" />{currentScale.date}
             </div>
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-              <Clock className="h-4 w-4" />
-              {scale.startTime} - {scale.endTime} ({scale.duration})
+              <Clock className="h-4 w-4" />{currentScale.startTime} - {currentScale.endTime} ({currentScale.duration})
             </div>
           </div>
 
           <div className="mt-3 flex items-center justify-between border-t pt-3">
             <span className="text-sm text-primary">Valor do plantão</span>
-            <span className="text-lg font-bold text-destructive">R$ {scale.value.toLocaleString('pt-BR')}</span>
+            <span className="text-lg font-bold text-destructive">R$ {currentScale.value.toLocaleString('pt-BR')}</span>
           </div>
         </CardContent>
       </Card>
 
       {/* Workflow Steps */}
-      {scale.workflowSteps && (
+      {currentScale.workflowSteps && (
         <Card className="glass-card">
           <CardContent className="p-4">
             <h3 className="font-semibold mb-4">Status da Escala</h3>
             <div className="space-y-0">
-              {scale.workflowSteps.map((step, i) => (
+              {currentScale.workflowSteps.map((step, i) => (
                 <div key={i} className="flex items-start gap-3">
                   <div className="flex flex-col items-center">
                     <div className={cn(
                       'flex h-8 w-8 items-center justify-center rounded-full border-2',
-                      step.done
-                        ? 'bg-primary border-primary text-primary-foreground'
-                        : 'border-border bg-background text-muted-foreground'
+                      step.done ? 'bg-primary border-primary text-primary-foreground' : 'border-border bg-background text-muted-foreground'
                     )}>
                       {step.done ? <CheckCircle2 className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
                     </div>
-                    {i < scale.workflowSteps!.length - 1 && (
+                    {i < currentScale.workflowSteps!.length - 1 && (
                       <div className={cn('w-0.5 h-6', step.done ? 'bg-primary' : 'bg-border')} />
                     )}
                   </div>
@@ -446,20 +577,32 @@ function ScaleDetail({ scale, onBack }: { scale: DoctorScale; onBack: () => void
         </Card>
       )}
 
-      {/* Actions */}
-      {scale.status === 'confirmado' && (
-        <Card className="glass-card">
-          <CardContent className="p-4">
-            <h3 className="font-semibold mb-3">Ações</h3>
-            <Button className="w-full bg-primary hover:bg-primary/90 gap-2" size="lg">
-              <Send className="h-4 w-4" />
-              Fazer Check-in
-            </Button>
-          </CardContent>
-        </Card>
+      {/* Check-in/out */}
+      {currentScale.status === 'confirmado' && (
+        <CheckInOut
+          scaleId={currentScale.id}
+          locationName={currentScale.location}
+          locationCoordinates={locationCoords}
+          checkIn={currentScale.checkIn}
+          checkOut={currentScale.checkOut}
+          onCheckIn={handleCheckIn}
+          onCheckOut={handleCheckOut}
+          isVerifying={periodicGeo.isActive}
+          lastVerification={periodicGeo.lastVerification}
+          isWithinRadiusNow={isWithinRadiusNow}
+        />
       )}
 
-      {scale.status === 'disponivel' && (
+      {/* Scale Actions (cancel/transfer) - only for confirmed, not yet checked in */}
+      {currentScale.status === 'confirmado' && !currentScale.checkIn && (
+        <ScaleActions
+          scale={scaleForActions}
+          onCancel={handleCancel}
+          onTransfer={handleTransfer}
+        />
+      )}
+
+      {currentScale.status === 'disponivel' && (
         <div className="flex gap-3">
           <Button variant="outline" className="flex-1" size="lg">Não tenho interesse</Button>
           <Button className="flex-1 bg-primary hover:bg-primary/90" size="lg">Candidatar-se</Button>
@@ -493,8 +636,7 @@ function NotificationsList() {
         </div>
         {unreadCount > 0 && (
           <button className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground" onClick={markAllRead}>
-            <CheckCheck className="h-4 w-4" />
-            Marcar todas
+            <CheckCheck className="h-4 w-4" />Marcar todas
           </button>
         )}
       </div>
@@ -503,12 +645,7 @@ function NotificationsList() {
         {notifications.map((n, i) => {
           const Icon = getIcon(n.icon);
           return (
-            <motion.div
-              key={n.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.03 }}
-            >
+            <motion.div key={n.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
               <Card className={cn('glass-card', !n.read && 'border-primary/20 bg-primary/5')}>
                 <CardContent className="flex items-start gap-3 p-4">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
@@ -543,15 +680,12 @@ function DoctorProfile() {
         <Button variant="ghost" size="icon"><Edit className="h-5 w-5" /></Button>
       </div>
 
-      {/* Profile Header */}
       <Card className="glass-card overflow-hidden">
         <div className="h-24 bg-gradient-medical" />
         <CardContent className="relative pb-6">
           <div className="flex flex-col items-center -mt-12">
             <Avatar className="h-20 w-20 border-4 border-background">
-              <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-bold">
-                {initials}
-              </AvatarFallback>
+              <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-bold">{initials}</AvatarFallback>
             </Avatar>
             <h2 className="text-xl font-bold mt-3">Dr. {user?.name || 'Carlos Silva'}</h2>
             <div className="flex gap-2 mt-2">
@@ -566,7 +700,6 @@ function DoctorProfile() {
             </div>
           </div>
 
-          {/* Stats */}
           <div className="grid grid-cols-3 gap-4 mt-6 text-center">
             {[
               { value: '48', label: 'Plantões' },
@@ -582,7 +715,6 @@ function DoctorProfile() {
         </CardContent>
       </Card>
 
-      {/* Specialties */}
       <div>
         <h3 className="text-sm font-semibold text-primary mb-2">Especialidades</h3>
         <div className="flex gap-2">
@@ -591,7 +723,6 @@ function DoctorProfile() {
         </div>
       </div>
 
-      {/* Contact Info */}
       <div>
         <h3 className="text-sm font-semibold text-primary mb-3">Informações de Contato</h3>
         <div className="space-y-3">
@@ -617,19 +748,25 @@ function DoctorProfile() {
 export default function DoctorArea() {
   const [activeTab, setActiveTab] = useState<DoctorTab>('inicio');
   const [selectedScale, setSelectedScale] = useState<DoctorScale | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const handleViewScale = (scale: DoctorScale) => {
     setSelectedScale(scale);
     setActiveTab('escalas');
   };
 
+  const handleScaleUpdate = () => {
+    setRefreshKey(k => k + 1);
+    setSelectedScale(null);
+  };
+
   const renderContent = () => {
     if (activeTab === 'escalas' && selectedScale) {
-      return <ScaleDetail scale={selectedScale} onBack={() => setSelectedScale(null)} />;
+      return <ScaleDetail scale={selectedScale} onBack={() => setSelectedScale(null)} onScaleUpdate={handleScaleUpdate} />;
     }
     switch (activeTab) {
-      case 'inicio': return <DoctorHome onViewScale={handleViewScale} onNavigate={setActiveTab} />;
-      case 'escalas': return <ScalesList onViewScale={setSelectedScale} />;
+      case 'inicio': return <DoctorHome key={refreshKey} onViewScale={handleViewScale} onNavigate={setActiveTab} />;
+      case 'escalas': return <ScalesList key={refreshKey} onViewScale={setSelectedScale} />;
       case 'alertas': return <NotificationsList />;
       case 'perfil': return <DoctorProfile />;
     }
@@ -640,7 +777,7 @@ export default function DoctorArea() {
       <div className="max-w-4xl mx-auto pb-20 lg:pb-0">
         <AnimatePresence mode="wait">
           <motion.div
-            key={activeTab + (selectedScale?.id || '')}
+            key={activeTab + (selectedScale?.id || '') + refreshKey}
             initial={{ opacity: 0, x: 10 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -10 }}
@@ -651,7 +788,6 @@ export default function DoctorArea() {
         </AnimatePresence>
       </div>
 
-      {/* Bottom Tab Bar (mobile-style but works on desktop too as quick nav inside doctor area) */}
       <div className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur-md lg:hidden">
         <div className="flex items-center justify-around py-2">
           {([
