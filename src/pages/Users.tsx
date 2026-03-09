@@ -49,6 +49,7 @@ export default function Users() {
   const isDeveloper = currentUser?.role === 'developer';
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [specialties, setSpecialties] = useState<Specialty[]>([]);
+  const [documents, setDocuments] = useState<Document[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<UserProfile[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
