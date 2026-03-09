@@ -26,6 +26,7 @@ import Settings from "./pages/Settings";
 import Profiles from "./pages/Profiles";
 import DoctorArea from "./pages/DoctorArea";
 import DevTools from "./pages/DevTools";
+import AuditLog from "./pages/AuditLog";
 
 const queryClient = new QueryClient();
 
@@ -55,6 +56,7 @@ const App = () => (
             <Route path="/pagamentos" element={<Payments />} />
             <Route path="/relatorios" element={<Reports />} />
             <Route path="/configuracoes" element={<Settings />} />
+            <Route path="/auditoria" element={<AuditLog />} />
             <Route path="/dev-tools" element={<DevTools />} />
             
             {/* Catch-all */}

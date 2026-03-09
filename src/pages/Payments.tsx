@@ -4,8 +4,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   DollarSign, Clock, CheckCircle, AlertCircle, Download, Calendar,
-  Plus, Search, MoreHorizontal, Pencil, Trash2,
+  Plus, Search, MoreHorizontal, Pencil, Trash2, ThumbsUp,
 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 import { MainLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +28,8 @@ const statusColors: Record<string, string> = { pendente: 'bg-warning/15 text-war
 const formatCurrency = (value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
 export default function Payments() {
+  const { user } = useAuth();
+  const isDoctor = user?.role === 'medico';
   const [payments, setPayments] = useState<Payment[]>([]);
   const [scales, setScales] = useState<Scale[]>([]);
   const [doctors, setDoctors] = useState<UserProfile[]>([]);
@@ -52,17 +55,21 @@ export default function Payments() {
   };
 
   useEffect(() => {
+    let result = payments;
+    // Doctors see only their payments
+    if (isDoctor && user) {
+      result = result.filter(p => p.doctorId === user.id);
+    }
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      setFilteredPayments(payments.filter((p) => {
+      result = result.filter((p) => {
         const scale = scales.find((s) => s.id === p.scaleId);
         const doctor = doctors.find((d) => d.id === p.doctorId);
         return scale?.title.toLowerCase().includes(term) || doctor?.name.toLowerCase().includes(term);
-      }));
-    } else {
-      setFilteredPayments(payments);
+      });
     }
-  }, [searchTerm, payments, scales, doctors]);
+    setFilteredPayments(result);
+  }, [searchTerm, payments, scales, doctors, isDoctor, user]);
 
   const getScaleTitle = (id: string) => scales.find((s) => s.id === id)?.title || 'N/A';
   const getDoctorName = (id: string) => doctors.find((d) => d.id === id)?.name || 'N/A';
@@ -111,6 +118,12 @@ export default function Payments() {
     setDeleteDialogOpen(false); setPaymentToDelete(null);
   };
 
+  const handleConfirmReceipt = (payment: Payment) => {
+    update(STORAGE_KEYS.PAYMENTS, payment.id, { confirmedByDoctor: true, confirmedAt: new Date().toISOString() });
+    loadData();
+    toast({ title: 'Recebimento confirmado!', description: 'Você confirmou o recebimento deste pagamento.' });
+  };
+
   const totalPending = payments.filter((p) => p.status === 'pendente' || p.status === 'atrasado').reduce((acc, p) => acc + p.amount, 0);
   const totalPaid = payments.filter((p) => p.status === 'pago').reduce((acc, p) => acc + p.amount, 0);
 
@@ -120,11 +133,13 @@ export default function Payments() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Pagamentos</h1>
-            <p className="text-muted-foreground">Acompanhe e gerencie pagamentos</p>
+            <p className="text-muted-foreground">{isDoctor ? 'Seus pagamentos' : 'Acompanhe e gerencie pagamentos'}</p>
           </div>
-          <Button onClick={() => openDialog()} className="w-full sm:w-auto">
-            <Plus className="mr-2 h-4 w-4" />Novo Pagamento
-          </Button>
+          {!isDoctor && (
+            <Button onClick={() => openDialog()} className="w-full sm:w-auto">
+              <Plus className="mr-2 h-4 w-4" />Novo Pagamento
+            </Button>
+          )}
         </div>
 
         {/* Stats */}
@@ -161,30 +176,48 @@ export default function Payments() {
           <CardContent>
             <Table>
               <TableHeader>
-                <TableRow>
+                 <TableRow>
                   <TableHead>Escala</TableHead>
-                  <TableHead>Médico</TableHead>
+                  {!isDoctor && <TableHead>Médico</TableHead>}
                   <TableHead>Valor</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Confirmação</TableHead>
                   <TableHead>Vencimento</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredPayments.length === 0 ? (
-                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhum pagamento encontrado.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={isDoctor ? 7 : 8} className="text-center text-muted-foreground py-8">Nenhum pagamento encontrado.</TableCell></TableRow>
                 ) : filteredPayments.map((payment) => (
                   <TableRow key={payment.id} className="group">
                     <TableCell><div className="flex items-center gap-2"><DollarSign className="h-4 w-4 text-muted-foreground" /><span className="font-medium">{getScaleTitle(payment.scaleId)}</span></div></TableCell>
-                    <TableCell className="text-sm">{getDoctorName(payment.doctorId)}</TableCell>
+                    {!isDoctor && <TableCell className="text-sm">{getDoctorName(payment.doctorId)}</TableCell>}
                     <TableCell className="font-medium">{formatCurrency(payment.amount)}</TableCell>
                     <TableCell><Badge variant="outline" className={statusColors[payment.status]}>{statusLabels[payment.status]}</Badge></TableCell>
+                    <TableCell>
+                      {payment.confirmedByDoctor ? (
+                        <Badge variant="outline" className="bg-success/15 text-success border-success/30 gap-1">
+                          <ThumbsUp className="h-3 w-3" />Confirmado
+                        </Badge>
+                      ) : payment.status === 'pago' ? (
+                        isDoctor ? (
+                          <Button size="sm" variant="outline" className="gap-1 text-xs h-7" onClick={() => handleConfirmReceipt(payment)}>
+                            <ThumbsUp className="h-3 w-3" />Confirmar
+                          </Button>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Aguardando médico</span>
+                        )
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
                     <TableCell>{payment.dueDate}</TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => openDialog(payment)}><Pencil className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>
+                          {!isDoctor && <DropdownMenuItem onClick={() => openDialog(payment)}><Pencil className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>}
                           {payment.status !== 'pago' && <DropdownMenuItem onClick={() => handleMarkPaid(payment)}><CheckCircle className="mr-2 h-4 w-4" />Marcar como Pago</DropdownMenuItem>}
                           <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(payment)}><Trash2 className="mr-2 h-4 w-4" />Excluir</DropdownMenuItem>
                         </DropdownMenuContent>

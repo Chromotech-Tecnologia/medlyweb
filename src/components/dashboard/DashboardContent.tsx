@@ -1,31 +1,16 @@
 import { motion } from 'framer-motion';
 import {
-  Users,
-  Calendar,
-  AlertCircle,
-  TrendingUp,
-  Stethoscope,
-  MapPin,
-  Clock,
-  CheckCircle,
+  Users, Calendar, AlertCircle, TrendingUp, Stethoscope, MapPin, Clock,
+  CheckCircle, DollarSign, FileText,
 } from 'lucide-react';
 import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  BarChart,
-  Bar,
+  PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, YAxis,
+  CartesianGrid, Tooltip, BarChart, Bar,
 } from 'recharts';
 import { StatsCard } from '@/components/dashboard/StatsCard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 // Mock data for charts
 const usersByRole = [
@@ -51,6 +36,19 @@ const ratingsByLocation = [
   { location: 'PS Lapa', rating: 3.8 },
 ];
 
+const recentScales = [
+  { id: '1', title: 'Plantão UPA - Clínica Geral', location: 'UPA Zona Norte', date: '15/03/2026', status: 'publicada', value: 1500 },
+  { id: '2', title: 'Plantão Hospital - Pediatria', location: 'Hospital Central', date: '18/03/2026', status: 'em_andamento', value: 3000 },
+  { id: '3', title: 'Ambulatório - Ortopedia', location: 'UBS Vila Mariana', date: '22/03/2026', status: 'rascunho', value: 800 },
+  { id: '4', title: 'Plantão PS - Cardiologia', location: 'PS Lapa', date: '25/03/2026', status: 'publicada', value: 2200 },
+];
+
+const pendingPayments = [
+  { id: '1', doctor: 'Dra. Ana Costa', scale: 'Plantão UPA', amount: 1500, dueDate: '20/03/2026', status: 'pendente' },
+  { id: '2', doctor: 'Dr. Pedro Mendes', scale: 'Plantão Hospital', amount: 3000, dueDate: '25/03/2026', status: 'pendente' },
+  { id: '3', doctor: 'Dra. Ana Costa', scale: 'Ambulatório', amount: 800, dueDate: '15/03/2026', status: 'atrasado' },
+];
+
 const recentActions = [
   { id: 1, action: 'Nova escala criada', user: 'Carlos Silva', time: '5 min atrás', type: 'create' },
   { id: 2, action: 'Candidatura aceita', user: 'Maria Santos', time: '15 min atrás', type: 'approve' },
@@ -58,14 +56,20 @@ const recentActions = [
   { id: 4, action: 'Documento enviado', user: 'Dr. Pedro Mendes', time: '1 hora atrás', type: 'document' },
 ];
 
+const scaleStatusColors: Record<string, string> = {
+  rascunho: 'bg-muted text-muted-foreground',
+  publicada: 'bg-success/15 text-success border-success/30',
+  em_andamento: 'bg-info/15 text-info border-info/30',
+};
+
+const paymentStatusColors: Record<string, string> = {
+  pendente: 'bg-warning/15 text-warning border-warning/30',
+  atrasado: 'bg-destructive/15 text-destructive border-destructive/30',
+};
+
 const containerVariants = {
   hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
+  visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
 };
 
 const itemVariants = {
@@ -75,63 +79,25 @@ const itemVariants = {
 
 export function DashboardContent() {
   return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className="space-y-6"
-    >
+    <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
       {/* Page Header */}
       <motion.div variants={itemVariants} className="space-y-1">
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Visão geral do sistema de escalas médicas
-        </p>
+        <p className="text-muted-foreground">Visão geral do sistema de escalas médicas</p>
       </motion.div>
 
-      {/* Stats Cards */}
-      <motion.div
-        variants={itemVariants}
-        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
-      >
-        <StatsCard
-          title="Total de Usuários"
-          value={68}
-          description="45 médicos ativos"
-          icon={Users}
-          trend={{ value: 12, isPositive: true }}
-          variant="default"
-        />
-        <StatsCard
-          title="Escalas Ativas"
-          value={23}
-          description="8 para esta semana"
-          icon={Calendar}
-          trend={{ value: 8, isPositive: true }}
-          variant="success"
-        />
-        <StatsCard
-          title="Pendências"
-          value={7}
-          description="3 documentos, 4 aprovações"
-          icon={AlertCircle}
-          variant="warning"
-        />
-        <StatsCard
-          title="Taxa de Ocupação"
-          value="87%"
-          description="Meta: 90%"
-          icon={TrendingUp}
-          trend={{ value: 3, isPositive: true }}
-          variant="info"
-        />
+      {/* 6 Stats Cards */}
+      <motion.div variants={itemVariants} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <StatsCard title="Total de Usuários" value={68} description="45 médicos ativos" icon={Users} trend={{ value: 12, isPositive: true }} variant="default" />
+        <StatsCard title="Escalas Ativas" value={23} description="8 para esta semana" icon={Calendar} trend={{ value: 8, isPositive: true }} variant="success" />
+        <StatsCard title="Pendências" value={7} description="3 docs, 4 aprovações" icon={AlertCircle} variant="warning" />
+        <StatsCard title="Taxa de Ocupação" value="87%" description="Meta: 90%" icon={TrendingUp} trend={{ value: 3, isPositive: true }} variant="info" />
+        <StatsCard title="Pgtos Pendentes" value={5} description="R$ 8.300 total" icon={DollarSign} variant="warning" />
+        <StatsCard title="Docs Pendentes" value={3} description="CRM, diplomas" icon={FileText} variant="default" />
       </motion.div>
 
-      {/* Charts Row */}
-      <motion.div
-        variants={itemVariants}
-        className="grid gap-6 lg:grid-cols-3"
-      >
+      {/* 3 Charts */}
+      <motion.div variants={itemVariants} className="grid gap-6 lg:grid-cols-3">
         {/* Users by Role Pie Chart */}
         <Card className="glass-card">
           <CardHeader>
@@ -142,36 +108,19 @@ export function DashboardContent() {
             <div className="h-[200px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie
-                    data={usersByRole}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={50}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
+                  <Pie data={usersByRole} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={5} dataKey="value">
                     {usersByRole.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--popover))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
-                    }}
-                  />
+                  <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-2">
               {usersByRole.map((item) => (
                 <div key={item.name} className="flex items-center gap-2 text-sm">
-                  <div
-                    className="h-3 w-3 rounded-full"
-                    style={{ backgroundColor: item.color }}
-                  />
+                  <div className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
                   <span className="text-muted-foreground">{item.name}</span>
                   <span className="ml-auto font-medium">{item.value}</span>
                 </div>
@@ -191,26 +140,10 @@ export function DashboardContent() {
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={scalesByMonth}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis
-                    dataKey="month"
-                    stroke="hsl(var(--muted-foreground))"
-                    fontSize={12}
-                  />
+                  <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} />
                   <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--popover))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
-                    }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="escalas"
-                    stroke="hsl(var(--primary))"
-                    strokeWidth={3}
-                    dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2 }}
-                  />
+                  <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
+                  <Line type="monotone" dataKey="escalas" stroke="hsl(var(--primary))" strokeWidth={3} dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -229,21 +162,8 @@ export function DashboardContent() {
                 <BarChart data={ratingsByLocation} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis type="number" domain={[0, 5]} stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                  <YAxis
-                    type="category"
-                    dataKey="location"
-                    stroke="hsl(var(--muted-foreground))"
-                    fontSize={10}
-                    width={100}
-                    tickFormatter={(value) => value.length > 15 ? value.slice(0, 15) + '...' : value}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--popover))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
-                    }}
-                  />
+                  <YAxis type="category" dataKey="location" stroke="hsl(var(--muted-foreground))" fontSize={10} width={100} tickFormatter={(value) => value.length > 15 ? value.slice(0, 15) + '...' : value} />
+                  <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
                   <Bar dataKey="rating" fill="hsl(var(--chart-2))" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -252,11 +172,85 @@ export function DashboardContent() {
         </Card>
       </motion.div>
 
-      {/* Bottom Row */}
-      <motion.div
-        variants={itemVariants}
-        className="grid gap-6 lg:grid-cols-2"
-      >
+      {/* 2 Tables */}
+      <motion.div variants={itemVariants} className="grid gap-6 lg:grid-cols-2">
+        {/* Recent Scales Table */}
+        <Card className="glass-card">
+          <CardHeader>
+            <CardTitle className="text-lg">Últimas Escalas Criadas</CardTitle>
+            <CardDescription>Escalas recentes no sistema</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Escala</TableHead>
+                  <TableHead>Local</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Valor</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {recentScales.map((scale) => (
+                  <TableRow key={scale.id}>
+                    <TableCell>
+                      <p className="font-medium text-sm">{scale.title}</p>
+                      <p className="text-xs text-muted-foreground">{scale.date}</p>
+                    </TableCell>
+                    <TableCell className="text-sm">{scale.location}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={scaleStatusColors[scale.status] || ''}>
+                        {scale.status === 'publicada' ? 'Publicada' : scale.status === 'em_andamento' ? 'Em Andamento' : 'Rascunho'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right font-medium">R$ {scale.value.toLocaleString('pt-BR')}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        {/* Pending Payments Table */}
+        <Card className="glass-card">
+          <CardHeader>
+            <CardTitle className="text-lg">Pagamentos Pendentes</CardTitle>
+            <CardDescription>Pagamentos que requerem atenção</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Médico</TableHead>
+                  <TableHead>Escala</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Valor</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pendingPayments.map((payment) => (
+                  <TableRow key={payment.id}>
+                    <TableCell className="font-medium text-sm">{payment.doctor}</TableCell>
+                    <TableCell>
+                      <p className="text-sm">{payment.scale}</p>
+                      <p className="text-xs text-muted-foreground">Vence: {payment.dueDate}</p>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={paymentStatusColors[payment.status] || ''}>
+                        {payment.status === 'pendente' ? 'Pendente' : 'Atrasado'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right font-medium">R$ {payment.amount.toLocaleString('pt-BR')}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Alerts + Recent Actions */}
+      <motion.div variants={itemVariants} className="grid gap-6 lg:grid-cols-2">
         {/* Recent Actions */}
         <Card className="glass-card">
           <CardHeader>
@@ -266,12 +260,8 @@ export function DashboardContent() {
           <CardContent>
             <div className="space-y-4">
               {recentActions.map((action) => (
-                <motion.div
-                  key={action.id}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="flex items-center gap-4 rounded-lg border border-border/50 p-3 transition-colors hover:bg-muted/50"
-                >
+                <motion.div key={action.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
+                  className="flex items-center gap-4 rounded-lg border border-border/50 p-3 transition-colors hover:bg-muted/50">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
                     {action.type === 'create' && <Calendar className="h-5 w-5 text-primary" />}
                     {action.type === 'approve' && <CheckCircle className="h-5 w-5 text-success" />}
@@ -283,8 +273,7 @@ export function DashboardContent() {
                     <p className="text-xs text-muted-foreground">{action.user}</p>
                   </div>
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Clock className="h-3 w-3" />
-                    {action.time}
+                    <Clock className="h-3 w-3" />{action.time}
                   </div>
                 </motion.div>
               ))}
@@ -292,7 +281,7 @@ export function DashboardContent() {
           </CardContent>
         </Card>
 
-        {/* Quick Stats / Alerts */}
+        {/* Alerts */}
         <Card className="glass-card">
           <CardHeader>
             <CardTitle className="text-lg">Alertas Ativos</CardTitle>
@@ -306,31 +295,23 @@ export function DashboardContent() {
                   <p className="text-sm font-medium">3 documentos pendentes de aprovação</p>
                   <p className="text-xs text-muted-foreground">CRM, diplomas e certificados</p>
                 </div>
-                <Badge variant="outline" className="border-warning/30 text-warning">
-                  Urgente
-                </Badge>
+                <Badge variant="outline" className="border-warning/30 text-warning">Urgente</Badge>
               </div>
-
               <div className="flex items-center gap-4 rounded-lg border border-info/30 bg-info/5 p-4">
                 <Clock className="h-5 w-5 text-info" />
                 <div className="flex-1">
                   <p className="text-sm font-medium">5 escalas sem candidatos</p>
                   <p className="text-xs text-muted-foreground">Próximos 7 dias</p>
                 </div>
-                <Badge variant="outline" className="border-info/30 text-info">
-                  Atenção
-                </Badge>
+                <Badge variant="outline" className="border-info/30 text-info">Atenção</Badge>
               </div>
-
               <div className="flex items-center gap-4 rounded-lg border border-success/30 bg-success/5 p-4">
                 <CheckCircle className="h-5 w-5 text-success" />
                 <div className="flex-1">
                   <p className="text-sm font-medium">12 check-ins confirmados hoje</p>
                   <p className="text-xs text-muted-foreground">Taxa de presença: 98%</p>
                 </div>
-                <Badge variant="outline" className="border-success/30 text-success">
-                  OK
-                </Badge>
+                <Badge variant="outline" className="border-success/30 text-success">OK</Badge>
               </div>
             </div>
           </CardContent>

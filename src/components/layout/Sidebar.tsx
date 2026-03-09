@@ -42,6 +42,7 @@ const navItems: NavItem[] = [
   { icon: FileText, label: 'Documentos', href: '/documentos' },
   { icon: CreditCard, label: 'Pagamentos', href: '/pagamentos' },
   { icon: BarChart3, label: 'Relatórios', href: '/relatorios' },
+  { icon: Shield, label: 'Auditoria', href: '/auditoria' },
   { icon: Settings, label: 'Configurações', href: '/configuracoes' },
 ];
 
