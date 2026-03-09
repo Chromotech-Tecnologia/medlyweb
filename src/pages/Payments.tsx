@@ -189,7 +189,7 @@ export default function Payments() {
               </TableHeader>
               <TableBody>
                 {filteredPayments.length === 0 ? (
-                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhum pagamento encontrado.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={isDoctor ? 7 : 8} className="text-center text-muted-foreground py-8">Nenhum pagamento encontrado.</TableCell></TableRow>
                 ) : filteredPayments.map((payment) => (
                   <TableRow key={payment.id} className="group">
                     <TableCell><div className="flex items-center gap-2"><DollarSign className="h-4 w-4 text-muted-foreground" /><span className="font-medium">{getScaleTitle(payment.scaleId)}</span></div></TableCell>
