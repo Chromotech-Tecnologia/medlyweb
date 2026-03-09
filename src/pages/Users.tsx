@@ -218,14 +218,15 @@ export default function Users() {
         <Card className="glass-card">
           <CardHeader><CardTitle className="text-lg">{filteredUsers.length} usuário{filteredUsers.length !== 1 ? 's' : ''} encontrado{filteredUsers.length !== 1 ? 's' : ''}</CardTitle></CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
+            {/* Desktop Table */}
+            <div className="hidden md:block overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Usuário</TableHead>
                     <TableHead>Perfil</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead className="hidden md:table-cell">Documentos</TableHead>
+                    <TableHead className="hidden lg:table-cell">Documentos</TableHead>
                     <TableHead className="hidden lg:table-cell">Avaliação</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
@@ -241,7 +242,7 @@ export default function Users() {
                       </TableCell>
                       <TableCell><Badge variant="secondary">{roleLabels[user.role]}</Badge></TableCell>
                       <TableCell><Badge variant="outline" className={statusColors[user.status]}>{statusLabels[user.status]}</Badge></TableCell>
-                      <TableCell className="hidden md:table-cell">
+                      <TableCell className="hidden lg:table-cell">
                         {user.role === 'medico' ? (() => {
                           const ds = getDoctorDocStatus(user.id);
                           return ds.total === 0 ? (
@@ -278,6 +279,42 @@ export default function Users() {
                   ))}
                 </TableBody>
               </Table>
+            </div>
+
+            {/* Mobile Cards */}
+            <div className="md:hidden space-y-3">
+              {filteredUsers.map((user) => (
+                <div key={user.id} className="rounded-lg border p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10"><AvatarImage src={user.avatarUrl} /><AvatarFallback>{user.name.charAt(0)}</AvatarFallback></Avatar>
+                      <div>
+                        <p className="font-medium text-sm">{user.name}</p>
+                        <p className="text-xs text-muted-foreground">{user.email}</p>
+                      </div>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => viewDetails(user)}><Eye className="mr-2 h-4 w-4" />Ver detalhes</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => openDialog(user)}><Pencil className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => toggleStatus(user)}>
+                          {user.status === 'ativo' ? <><UserX className="mr-2 h-4 w-4" />Desativar</> : <><UserCheck className="mr-2 h-4 w-4" />Ativar</>}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(user)}><Trash2 className="mr-2 h-4 w-4" />Excluir</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="secondary">{roleLabels[user.role]}</Badge>
+                    <Badge variant="outline" className={statusColors[user.status]}>{statusLabels[user.status]}</Badge>
+                    {user.averageRating ? (
+                      <Badge variant="outline" className="gap-1"><span className="text-warning">★</span>{user.averageRating.toFixed(1)}</Badge>
+                    ) : null}
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>

@@ -112,49 +112,69 @@ export default function AuditLogPage() {
             <CardTitle className="text-lg">{filtered.length} registro{filtered.length !== 1 ? 's' : ''}</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Data/Hora</TableHead>
-                  <TableHead>Usuário</TableHead>
-                  <TableHead>Ação</TableHead>
-                  <TableHead>Entidade</TableHead>
-                  <TableHead>ID</TableHead>
-                  <TableHead className="w-10"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.length === 0 ? (
-                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhum registro encontrado.</TableCell></TableRow>
-                ) : filtered.map((log) => (
-                  <>
-                    <TableRow key={log.id} className="group cursor-pointer" onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}>
-                      <TableCell className="text-sm">{new Date(log.timestamp).toLocaleString('pt-BR')}</TableCell>
-                      <TableCell className="font-medium text-sm">{log.userName}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={actionColors[log.action] || 'bg-muted text-muted-foreground'}>
-                          {log.action}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm">{log.entity}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground font-mono">{log.entityId.slice(0, 8)}...</TableCell>
-                      <TableCell>
-                        {log.details && (expandedId === log.id ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />)}
-                      </TableCell>
-                    </TableRow>
-                    {expandedId === log.id && log.details && (
-                      <TableRow key={`${log.id}-details`}>
-                        <TableCell colSpan={6} className="bg-muted/30">
-                          <pre className="text-xs text-muted-foreground whitespace-pre-wrap font-mono p-2">
-                            {JSON.stringify(log.details, null, 2)}
-                          </pre>
+            {/* Desktop Table */}
+            <div className="hidden md:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Data/Hora</TableHead>
+                    <TableHead>Usuário</TableHead>
+                    <TableHead>Ação</TableHead>
+                    <TableHead>Entidade</TableHead>
+                    <TableHead>ID</TableHead>
+                    <TableHead className="w-10"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.length === 0 ? (
+                    <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhum registro encontrado.</TableCell></TableRow>
+                  ) : filtered.map((log) => (
+                    <>
+                      <TableRow key={log.id} className="group cursor-pointer" onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}>
+                        <TableCell className="text-sm">{new Date(log.timestamp).toLocaleString('pt-BR')}</TableCell>
+                        <TableCell className="font-medium text-sm">{log.userName}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={actionColors[log.action] || 'bg-muted text-muted-foreground'}>{log.action}</Badge>
+                        </TableCell>
+                        <TableCell className="text-sm">{log.entity}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground font-mono">{log.entityId.slice(0, 8)}...</TableCell>
+                        <TableCell>
+                          {log.details && (expandedId === log.id ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />)}
                         </TableCell>
                       </TableRow>
-                    )}
-                  </>
-                ))}
-              </TableBody>
-            </Table>
+                      {expandedId === log.id && log.details && (
+                        <TableRow key={`${log.id}-details`}>
+                          <TableCell colSpan={6} className="bg-muted/30">
+                            <pre className="text-xs text-muted-foreground whitespace-pre-wrap font-mono p-2">{JSON.stringify(log.details, null, 2)}</pre>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Mobile Cards */}
+            <div className="md:hidden space-y-3">
+              {filtered.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">Nenhum registro encontrado.</p>
+              ) : filtered.map((log) => (
+                <div key={log.id} className="rounded-lg border p-3 space-y-2 cursor-pointer" onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}>
+                  <div className="flex items-center justify-between">
+                    <Badge variant="outline" className={actionColors[log.action] || 'bg-muted text-muted-foreground'}>{log.action}</Badge>
+                    <span className="text-xs text-muted-foreground">{new Date(log.timestamp).toLocaleString('pt-BR')}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">{log.userName}</span>
+                    <span className="text-xs text-muted-foreground">{log.entity}</span>
+                  </div>
+                  {expandedId === log.id && log.details && (
+                    <pre className="text-xs text-muted-foreground whitespace-pre-wrap font-mono p-2 bg-muted/30 rounded">{JSON.stringify(log.details, null, 2)}</pre>
+                  )}
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </motion.div>

@@ -90,7 +90,7 @@ export function DashboardGestor() {
       </motion.div>
 
       {/* 4 Stats Cards */}
-      <motion.div variants={itemVariants} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <motion.div variants={itemVariants} className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <StatsCard title="Médicos Ativos" value={45} description="3 novos este mês" icon={Users} trend={{ value: 7, isPositive: true }} variant="default" />
         <StatsCard title="Escalas da Semana" value={8} description="5 confirmadas" icon={Calendar} variant="success" />
         <StatsCard title="Candidaturas Pendentes" value={12} description="Aguardando aprovação" icon={UserCheck} variant="warning" />
@@ -98,7 +98,7 @@ export function DashboardGestor() {
       </motion.div>
 
       {/* 5 Charts - Row 1 (3) */}
-      <motion.div variants={itemVariants} className="grid gap-6 lg:grid-cols-3">
+      <motion.div variants={itemVariants} className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {/* Scales by Status */}
         <Card className="glass-card">
           <CardHeader>

@@ -319,7 +319,8 @@ export default function Scales() {
           <Card className="glass-card">
             <CardHeader><CardTitle className="text-lg">{filteredScales.length} escala{filteredScales.length !== 1 ? 's' : ''}</CardTitle></CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
+              {/* Desktop Table */}
+              <div className="hidden md:block overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -361,6 +362,42 @@ export default function Scales() {
                     ))}
                   </TableBody>
                 </Table>
+              </div>
+
+              {/* Mobile Cards */}
+              <div className="md:hidden space-y-3">
+                {filteredScales.map((scale) => (
+                  <div key={scale.id} className="rounded-lg border p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-sm">{scale.title}</p>
+                        <p className="text-xs text-muted-foreground">{getSpecialtyName(scale.specialtyId)}</p>
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => viewDetails(scale)}><Eye className="mr-2 h-4 w-4" />Ver detalhes</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => openDialog(scale)}><Pencil className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>
+                          {scale.status === 'rascunho' && <DropdownMenuItem onClick={() => handlePublish(scale)}><CheckCircle className="mr-2 h-4 w-4" />Publicar</DropdownMenuItem>}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(scale)}><Trash2 className="mr-2 h-4 w-4" />Excluir</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <MapPin className="h-3 w-3" />{getLocationName(scale.locationId)}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-medium">{format(parseISO(scale.date), 'dd/MM/yyyy')}</span>
+                      <span className="text-xs text-muted-foreground">{scale.startTime} - {scale.endTime}</span>
+                      <Badge variant="secondary" className="text-xs">{shiftLabels[scale.shift]}</Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Badge variant="outline" className={statusColors[scale.status]}>{statusLabels[scale.status]}</Badge>
+                      <span className="font-bold text-sm">{formatCurrency(scale.paymentValue)}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
