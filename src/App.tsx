@@ -26,6 +26,7 @@ import Settings from "./pages/Settings";
 import Profiles from "./pages/Profiles";
 import DoctorArea from "./pages/DoctorArea";
 import DevTools from "./pages/DevTools";
+import AuditLog from "./pages/AuditLog";
 
 const queryClient = new QueryClient();
 
