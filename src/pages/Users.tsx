@@ -4,8 +4,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Plus, Search, Filter, MoreHorizontal, Pencil, Trash2,
-  UserCheck, UserX, Eye, Loader2, ImageIcon,
+  UserCheck, UserX, Eye, Loader2, ImageIcon, ShieldCheck, ShieldAlert,
 } from 'lucide-react';
+import { validateCrm, type CrmValidationResult } from '@/lib/mocks/crmApi';
 import { MainLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
