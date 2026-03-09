@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Code, Key, RefreshCw, Database, Shield, Activity, Eye, EyeOff, Save, Trash2, ExternalLink } from 'lucide-react';
+import { Code, Key, RefreshCw, Database, Shield, Activity, Eye, EyeOff, Save, Trash2, ExternalLink, Loader2, ShieldCheck, ShieldAlert, Search } from 'lucide-react';
 import { MainLayout } from '@/components/layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,8 +13,10 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { Navigate } from 'react-router-dom';
 import { STORAGE_KEYS, getAll, resetStorage } from '@/lib/mocks/storage';
-import { getApiConfig, setApiConfig, type ApiConfig } from '@/lib/mocks/crmApi';
+import { getApiConfig, setApiConfig, validateCrm, type ApiConfig, type CrmValidationResult } from '@/lib/mocks/crmApi';
 import type { AuditLog, UserProfile } from '@/lib/mocks/types';
+import { Badge as BadgeUI } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
 export default function DevTools() {
   const { user } = useAuth();
@@ -23,6 +25,10 @@ export default function DevTools() {
   const [showApiKey, setShowApiKey] = useState(false);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [entityCounts, setEntityCounts] = useState<Record<string, number>>({});
+  const [testCrm, setTestCrm] = useState('');
+  const [testUf, setTestUf] = useState('');
+  const [crmLoading, setCrmLoading] = useState(false);
+  const [crmResult, setCrmResult] = useState<CrmValidationResult | null>(null);
 
   const loadData = () => {
     const counts: Record<string, number> = {};
@@ -164,6 +170,129 @@ export default function DevTools() {
                     <Save className="h-4 w-4" />Salvar Configuração
                   </Button>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* CRM Test Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Search className="h-5 w-5" />
+                  Teste de Consulta CRM
+                </CardTitle>
+                <CardDescription>
+                  Insira um CRM e UF para testar a consulta e visualizar os dados retornados no formato padrão InfoSimples.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex gap-3 items-end">
+                  <div className="flex-1 space-y-1">
+                    <label className="text-sm font-medium">CRM</label>
+                    <Input
+                      value={testCrm}
+                      onChange={(e) => setTestCrm(e.target.value)}
+                      placeholder="Ex: 123456"
+                    />
+                  </div>
+                  <div className="w-24 space-y-1">
+                    <label className="text-sm font-medium">UF</label>
+                    <Input
+                      value={testUf}
+                      onChange={(e) => setTestUf(e.target.value.toUpperCase())}
+                      placeholder="SP"
+                      maxLength={2}
+                    />
+                  </div>
+                  <Button
+                    disabled={crmLoading || !testCrm || !testUf}
+                    onClick={async () => {
+                      setCrmLoading(true);
+                      setCrmResult(null);
+                      const result = await validateCrm(testCrm, testUf);
+                      setCrmResult(result);
+                      setCrmLoading(false);
+                    }}
+                    className="gap-2"
+                  >
+                    {crmLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+                    Consultar
+                  </Button>
+                </div>
+
+                {crmResult && (
+                  <div className="space-y-3">
+                    <Separator />
+                    <div className="flex items-center gap-2">
+                      {crmResult.status === 'ativo' ? (
+                        <ShieldCheck className="h-5 w-5 text-success" />
+                      ) : (
+                        <ShieldAlert className="h-5 w-5 text-destructive" />
+                      )}
+                      <span className="font-semibold text-lg">
+                        CRM {crmResult.crm}/{crmResult.uf}
+                      </span>
+                      <Badge
+                        variant="outline"
+                        className={
+                          crmResult.status === 'ativo'
+                            ? 'bg-success/15 text-success border-success/30'
+                            : crmResult.status === 'inativo'
+                            ? 'bg-warning/15 text-warning border-warning/30'
+                            : 'bg-destructive/15 text-destructive border-destructive/30'
+                        }
+                      >
+                        {crmResult.status?.toUpperCase() || 'DESCONHECIDO'}
+                      </Badge>
+                    </div>
+
+                    {crmResult.error ? (
+                      <p className="text-sm text-destructive">{crmResult.error}</p>
+                    ) : (
+                      <div className="rounded-lg border p-4 space-y-2 text-sm">
+                        <div className="grid grid-cols-[140px_1fr] gap-y-2">
+                          <span className="text-muted-foreground font-medium">Nome:</span>
+                          <span>{crmResult.name || '—'}</span>
+
+                          <span className="text-muted-foreground font-medium">Situação:</span>
+                          <span>{crmResult.situation || '—'}</span>
+
+                          <span className="text-muted-foreground font-medium">Data Inscrição:</span>
+                          <span>{crmResult.registrationDate || '—'}</span>
+
+                          <span className="text-muted-foreground font-medium">Especialidades:</span>
+                          <span>
+                            {crmResult.specialties && crmResult.specialties.length > 0 ? (
+                              <span className="flex flex-wrap gap-1">
+                                {crmResult.specialties.map((s, i) => (
+                                  <Badge key={i} variant="secondary" className="text-xs">{s}</Badge>
+                                ))}
+                              </span>
+                            ) : '—'}
+                          </span>
+                        </div>
+
+                        <Separator className="my-2" />
+                        <details className="cursor-pointer">
+                          <summary className="text-xs text-muted-foreground">JSON bruto (formato InfoSimples)</summary>
+                          <pre className="mt-2 rounded bg-muted p-3 text-xs overflow-auto max-h-60">
+                            {JSON.stringify({
+                              code: 200,
+                              code_message: 'success',
+                              data: [{
+                                crm: crmResult.crm,
+                                uf: crmResult.uf,
+                                nome: crmResult.name,
+                                situacao: crmResult.situation,
+                                data_inscricao: crmResult.registrationDate,
+                                especialidades: crmResult.specialties?.map(s => ({ nome: s })) || [],
+                              }],
+                            }, null, 2)}
+                          </pre>
+                        </details>
+                      </div>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
