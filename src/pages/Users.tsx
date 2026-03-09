@@ -241,7 +241,20 @@ export default function Users() {
                       </TableCell>
                       <TableCell><Badge variant="secondary">{roleLabels[user.role]}</Badge></TableCell>
                       <TableCell><Badge variant="outline" className={statusColors[user.status]}>{statusLabels[user.status]}</Badge></TableCell>
-                      <TableCell className="hidden md:table-cell">{user.phone}</TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {user.role === 'medico' ? (() => {
+                          const ds = getDoctorDocStatus(user.id);
+                          return ds.total === 0 ? (
+                            <span className="text-xs text-muted-foreground">Sem docs</span>
+                          ) : (
+                            <div className="flex gap-1">
+                              {ds.approved > 0 && <Badge variant="outline" className="text-xs bg-success/15 text-success border-success/30">{ds.approved} <CheckCircle className="ml-0.5 h-3 w-3" /></Badge>}
+                              {ds.pending > 0 && <Badge variant="outline" className="text-xs bg-warning/15 text-warning border-warning/30">{ds.pending} <Clock className="ml-0.5 h-3 w-3" /></Badge>}
+                              {ds.rejected > 0 && <Badge variant="outline" className="text-xs bg-destructive/15 text-destructive border-destructive/30">{ds.rejected} <XCircle className="ml-0.5 h-3 w-3" /></Badge>}
+                            </div>
+                          );
+                        })() : <span className="text-muted-foreground">—</span>}
+                      </TableCell>
                       <TableCell className="hidden lg:table-cell">
                         {user.averageRating ? (<div className="flex items-center gap-1"><span className="text-warning">★</span><span>{user.averageRating.toFixed(1)}</span></div>) : <span className="text-muted-foreground">—</span>}
                       </TableCell>
