@@ -16,10 +16,12 @@ import {
   BarChart3,
   Shield,
   HeartPulse,
+  Code,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useAuth } from '@/hooks/useAuth';
 
 interface NavItem {
   icon: React.ElementType;
