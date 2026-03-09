@@ -379,7 +379,6 @@ export default function Users() {
                         {crmResult.error && <p className="text-destructive">{crmResult.error}</p>}
                       </div>
                     )}
-                    </div>
                     <FormField control={form.control} name="specialties" render={({ field }) => (
                       <FormItem>
                         <FormLabel>Especialidades</FormLabel>
