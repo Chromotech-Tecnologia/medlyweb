@@ -77,13 +77,21 @@ export default function Users() {
 
   const loadData = () => {
     let data = getAll<UserProfile>(STORAGE_KEYS.USERS);
-    // Non-developer users cannot see developer users
     if (!isDeveloper) {
       data = data.filter(u => u.role !== 'developer');
     }
     setUsers(data);
     setFilteredUsers(data);
     setSpecialties(getAll<Specialty>(STORAGE_KEYS.SPECIALTIES));
+    setDocuments(getAll<Document>(STORAGE_KEYS.DOCUMENTS));
+  };
+
+  const getDoctorDocStatus = (userId: string) => {
+    const docs = documents.filter(d => d.userId === userId);
+    const approved = docs.filter(d => d.status === 'aprovado').length;
+    const pending = docs.filter(d => d.status === 'pendente').length;
+    const rejected = docs.filter(d => d.status === 'rejeitado').length;
+    return { total: docs.length, approved, pending, rejected };
   };
 
   useEffect(() => {
