@@ -24,11 +24,6 @@ export default function DevTools() {
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [entityCounts, setEntityCounts] = useState<Record<string, number>>({});
 
-  // Redirect non-developers
-  if (user?.role !== 'developer') {
-    return <Navigate to="/" replace />;
-  }
-
   const loadData = () => {
     const counts: Record<string, number> = {};
     const keys: Record<string, string> = {
@@ -58,6 +53,11 @@ export default function DevTools() {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Redirect non-developers
+  if (user?.role !== 'developer') {
+    return <Navigate to="/" replace />;
+  }
 
   const saveApiConfig = () => {
     setApiConfig(apiConfig);
