@@ -4,8 +4,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   DollarSign, Clock, CheckCircle, AlertCircle, Download, Calendar,
-  Plus, Search, MoreHorizontal, Pencil, Trash2,
+  Plus, Search, MoreHorizontal, Pencil, Trash2, ThumbsUp,
 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 import { MainLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
