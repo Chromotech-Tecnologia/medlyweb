@@ -4,8 +4,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Plus, Search, Filter, MoreHorizontal, Pencil, Trash2,
-  UserCheck, UserX, Eye, Loader2, ImageIcon,
+  UserCheck, UserX, Eye, Loader2, ImageIcon, ShieldCheck, ShieldAlert,
 } from 'lucide-react';
+import { validateCrm, type CrmValidationResult } from '@/lib/mocks/crmApi';
 import { MainLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -60,6 +61,8 @@ export default function Users() {
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [selectedAvatar, setSelectedAvatar] = useState<string>(getAvatarUrl(0));
   const [customAvatarFile, setCustomAvatarFile] = useState<string | null>(null);
+  const [crmResult, setCrmResult] = useState<CrmValidationResult | null>(null);
+  const [crmLoading, setCrmLoading] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<UserFormData>({
@@ -344,6 +347,38 @@ export default function Users() {
                         <FormItem><FormLabel>UF do CRM</FormLabel><FormControl><Input {...field} placeholder="SP" maxLength={2} /></FormControl><FormMessage /></FormItem>
                       )} />
                     </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={crmLoading || !form.getValues('crm') || !form.getValues('crmState')}
+                      onClick={async () => {
+                        setCrmLoading(true);
+                        setCrmResult(null);
+                        const result = await validateCrm(form.getValues('crm') || '', form.getValues('crmState') || '');
+                        setCrmResult(result);
+                        setCrmLoading(false);
+                      }}
+                      className="gap-2"
+                    >
+                      {crmLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+                      Validar CRM
+                    </Button>
+                    {crmResult && (
+                      <div className={`rounded-lg border p-3 text-sm space-y-1 ${crmResult.status === 'ativo' ? 'border-success/30 bg-success/5' : 'border-destructive/30 bg-destructive/5'}`}>
+                        <div className="flex items-center gap-2 font-medium">
+                          {crmResult.status === 'ativo' ? <ShieldCheck className="h-4 w-4 text-success" /> : <ShieldAlert className="h-4 w-4 text-destructive" />}
+                          CRM {crmResult.crm}/{crmResult.uf} — {crmResult.status?.toUpperCase()}
+                        </div>
+                        {crmResult.name && <p>Nome: {crmResult.name}</p>}
+                        {crmResult.situation && <p>Situação: {crmResult.situation}</p>}
+                        {crmResult.specialties && crmResult.specialties.length > 0 && (
+                          <p>Especialidades: {crmResult.specialties.join(', ')}</p>
+                        )}
+                        {crmResult.registrationDate && <p>Inscrição: {crmResult.registrationDate}</p>}
+                        {crmResult.error && <p className="text-destructive">{crmResult.error}</p>}
+                      </div>
+                    )}
                     <FormField control={form.control} name="specialties" render={({ field }) => (
                       <FormItem>
                         <FormLabel>Especialidades</FormLabel>
