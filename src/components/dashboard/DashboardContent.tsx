@@ -87,7 +87,7 @@ export function DashboardContent() {
       </motion.div>
 
       {/* 6 Stats Cards */}
-      <motion.div variants={itemVariants} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      <motion.div variants={itemVariants} className="grid gap-4 grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
         <StatsCard title="Total de Usuários" value={68} description="45 médicos ativos" icon={Users} trend={{ value: 12, isPositive: true }} variant="default" />
         <StatsCard title="Escalas Ativas" value={23} description="8 para esta semana" icon={Calendar} trend={{ value: 8, isPositive: true }} variant="success" />
         <StatsCard title="Pendências" value={7} description="3 docs, 4 aprovações" icon={AlertCircle} variant="warning" />
