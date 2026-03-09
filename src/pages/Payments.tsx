@@ -176,13 +176,15 @@ export default function Payments() {
           <CardContent>
             <Table>
               <TableHeader>
-                <TableRow>
+                 <TableRow>
                   <TableHead>Escala</TableHead>
-                  <TableHead>Médico</TableHead>
+                  {!isDoctor && <TableHead>Médico</TableHead>}
                   <TableHead>Valor</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Confirmação</TableHead>
                   <TableHead>Vencimento</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
                 </TableRow>
               </TableHeader>
               <TableBody>
