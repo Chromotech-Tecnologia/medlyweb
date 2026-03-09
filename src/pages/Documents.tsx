@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   FileText, Upload, Clock, CheckCircle, XCircle, AlertCircle,
-  Plus, Search, MoreHorizontal, Pencil, Trash2, Eye, File, X,
+  Plus, Search, MoreHorizontal, Pencil, Trash2, Eye, File, X, Download,
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
