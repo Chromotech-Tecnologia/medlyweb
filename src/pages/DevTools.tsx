@@ -19,26 +19,41 @@ import type { AuditLog, UserProfile } from '@/lib/mocks/types';
 export default function DevTools() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [apiConfig, setLocalApiConfig] = useState<ApiConfig>(getApiConfig());
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [entityCounts, setEntityCounts] = useState<Record<string, number>>({});
 
   // Redirect non-developers
   if (user?.role !== 'developer') {
     return <Navigate to="/" replace />;
   }
 
-  const [apiConfig, setLocalApiConfig] = useState<ApiConfig>(getApiConfig());
-  const [showApiKey, setShowApiKey] = useState(false);
-  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
-  const [entityCounts, setEntityCounts] = useState<Record<string, number>>({});
-
-  useEffect(() => {
-    loadData();
-  }, []);
-
   const loadData = () => {
-    setAuditLogs(getAll<AuditLog & { deletedAt: string | null }>(STORAGE_KEYS.AUDIT_LOGS).slice(0, 50) as unknown as AuditLog[]);
-
     const counts: Record<string, number> = {};
     const keys: Record<string, string> = {
+      'Usuários': STORAGE_KEYS.USERS,
+      'Escalas': STORAGE_KEYS.SCALES,
+      'Locais': STORAGE_KEYS.LOCATIONS,
+      'Especialidades': STORAGE_KEYS.SPECIALTIES,
+      'Tipos de Escala': STORAGE_KEYS.SCALE_TYPES,
+      'Candidaturas': STORAGE_KEYS.CANDIDATURES,
+      'Documentos': STORAGE_KEYS.DOCUMENTS,
+      'Pagamentos': STORAGE_KEYS.PAYMENTS,
+      'Notificações': STORAGE_KEYS.NOTIFICATIONS,
+    };
+    Object.entries(keys).forEach(([label, key]) => {
+      const data = localStorage.getItem(key);
+      counts[label] = data ? JSON.parse(data).length : 0;
+    });
+    setEntityCounts(counts);
+
+    const raw = localStorage.getItem(STORAGE_KEYS.AUDIT_LOGS);
+    if (raw) {
+      const logs: AuditLog[] = JSON.parse(raw);
+      setAuditLogs(logs.slice(0, 100));
+    }
+  };
       'Usuários': STORAGE_KEYS.USERS,
       'Escalas': STORAGE_KEYS.SCALES,
       'Locais': STORAGE_KEYS.LOCATIONS,

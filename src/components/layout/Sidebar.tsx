@@ -55,9 +55,9 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   const { user } = useAuth();
   const isDeveloper = user?.role === 'developer';
 
-  const allNavItems = [
+  const allNavItems: NavItem[] = [
     ...navItems,
-    ...(isDeveloper ? [{ icon: Code, label: 'Dev Tools', href: '/dev-tools' }] : []),
+    ...(isDeveloper ? [{ icon: Code, label: 'Dev Tools', href: '/dev-tools' } as NavItem] : []),
   ];
 
   return (
