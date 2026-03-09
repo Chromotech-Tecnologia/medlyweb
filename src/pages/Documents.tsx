@@ -327,8 +327,20 @@ export default function Documents() {
                   return (
                     <TableRow key={doc.id} className="group">
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-muted-foreground" />
+                        <div className="flex items-center gap-3">
+                          {doc.fileUrl && doc.fileUrl !== '#mock-file' && isImageFile(doc.fileUrl) ? (
+                            <div className="h-10 w-10 shrink-0 rounded-md border overflow-hidden bg-muted">
+                              <img src={doc.fileUrl} alt={doc.name} className="h-full w-full object-cover" />
+                            </div>
+                          ) : doc.fileUrl && doc.fileUrl !== '#mock-file' && isPdfFile(doc.fileUrl) ? (
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border bg-destructive/5">
+                              <FileText className="h-5 w-5 text-destructive" />
+                            </div>
+                          ) : (
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border bg-muted">
+                              <File className="h-5 w-5 text-muted-foreground" />
+                            </div>
+                          )}
                           <div>
                             <span className="font-medium">{doc.name}</span>
                             {doc.fileUrl && doc.fileUrl !== '#mock-file' && <p className="text-xs text-muted-foreground">Arquivo anexado</p>}
