@@ -21,7 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { initializeStorage, STORAGE_KEYS, getAll, create, update, softDelete } from '@/lib/mocks/storage';
-import type { UserProfile, Specialty } from '@/lib/mocks/types';
+import type { UserProfile, Specialty, Document } from '@/lib/mocks/types';
 import { useAuth } from '@/hooks/useAuth';
 import { userSchema, type UserFormData } from '@/lib/validations';
 
