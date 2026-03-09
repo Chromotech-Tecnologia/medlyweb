@@ -13,8 +13,10 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { Navigate } from 'react-router-dom';
 import { STORAGE_KEYS, getAll, resetStorage } from '@/lib/mocks/storage';
-import { getApiConfig, setApiConfig, type ApiConfig } from '@/lib/mocks/crmApi';
+import { getApiConfig, setApiConfig, validateCrm, type ApiConfig, type CrmValidationResult } from '@/lib/mocks/crmApi';
 import type { AuditLog, UserProfile } from '@/lib/mocks/types';
+import { Badge as BadgeUI } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
 export default function DevTools() {
   const { user } = useAuth();
