@@ -54,30 +54,9 @@ export default function DevTools() {
       setAuditLogs(logs.slice(0, 100));
     }
   };
-      'Usuários': STORAGE_KEYS.USERS,
-      'Escalas': STORAGE_KEYS.SCALES,
-      'Locais': STORAGE_KEYS.LOCATIONS,
-      'Especialidades': STORAGE_KEYS.SPECIALTIES,
-      'Tipos de Escala': STORAGE_KEYS.SCALE_TYPES,
-      'Candidaturas': STORAGE_KEYS.CANDIDATURES,
-      'Documentos': STORAGE_KEYS.DOCUMENTS,
-      'Pagamentos': STORAGE_KEYS.PAYMENTS,
-      'Notificações': STORAGE_KEYS.NOTIFICATIONS,
-    };
-    Object.entries(keys).forEach(([label, key]) => {
-      const data = localStorage.getItem(key);
-      counts[label] = data ? JSON.parse(data).length : 0;
-    });
-    setEntityCounts(counts);
-  };
 
-  // Read raw audit logs from storage (they don't extend BaseEntity)
   useEffect(() => {
-    const raw = localStorage.getItem(STORAGE_KEYS.AUDIT_LOGS);
-    if (raw) {
-      const logs: AuditLog[] = JSON.parse(raw);
-      setAuditLogs(logs.slice(0, 100));
-    }
+    loadData();
   }, []);
 
   const saveApiConfig = () => {
