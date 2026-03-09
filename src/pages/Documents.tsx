@@ -411,16 +411,30 @@ export default function Documents() {
                     <input ref={fileInputRef} type="file" className="hidden" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"
                       onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileSelect(f); }} />
                     {uploadedFile ? (
-                      <div className="flex items-center justify-center gap-3">
-                        <File className="h-8 w-8 text-primary" />
-                        <div className="text-left">
-                          <p className="font-medium text-sm">{uploadedFile.name}</p>
-                          <p className="text-xs text-muted-foreground">Clique para substituir</p>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <File className="h-6 w-6 text-primary" />
+                            <div>
+                              <p className="font-medium text-sm">{uploadedFile.name}</p>
+                              <p className="text-xs text-muted-foreground">Clique para substituir</p>
+                            </div>
+                          </div>
+                          <Button type="button" variant="ghost" size="icon" className="h-6 w-6"
+                            onClick={(e) => { e.stopPropagation(); setUploadedFile(null); }}>
+                            <X className="h-4 w-4" />
+                          </Button>
                         </div>
-                        <Button type="button" variant="ghost" size="icon" className="ml-2 h-6 w-6"
-                          onClick={(e) => { e.stopPropagation(); setUploadedFile(null); }}>
-                          <X className="h-4 w-4" />
-                        </Button>
+                        {/* Inline preview */}
+                        {isImageFile(uploadedFile.dataUrl) ? (
+                          <div className="rounded-md border overflow-hidden bg-muted">
+                            <img src={uploadedFile.dataUrl} alt="Preview" className="w-full max-h-48 object-contain" />
+                          </div>
+                        ) : isPdfFile(uploadedFile.dataUrl) ? (
+                          <div className="rounded-md border overflow-hidden">
+                            <iframe src={uploadedFile.dataUrl} className="w-full h-48" title="Preview PDF" />
+                          </div>
+                        ) : null}
                       </div>
                     ) : (
                       <div>
