@@ -1,8 +1,9 @@
 /**
  * Export data to CSV and trigger download
  */
-export function exportToCsv<T extends Record<string, unknown>>(
-  data: T[],
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function exportToCsv(
+  data: any[],
   filename: string,
   columns?: { key: string; label: string }[]
 ): void {
