@@ -175,7 +175,7 @@ export default function Register() {
     let fieldsToValidate: (keyof RegisterFormData)[] = [];
     
     if (step === 1) {
-      fieldsToValidate = ['name', 'email', 'phone', 'cpf'];
+      fieldsToValidate = ['name', 'email', 'phone', 'cpf', 'crm', 'crmState'];
     } else if (step === 2) {
       fieldsToValidate = ['cep', 'street', 'number', 'neighborhood', 'city', 'state'];
     }
