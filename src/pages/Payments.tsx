@@ -118,6 +118,12 @@ export default function Payments() {
     setDeleteDialogOpen(false); setPaymentToDelete(null);
   };
 
+  const handleConfirmReceipt = (payment: Payment) => {
+    update(STORAGE_KEYS.PAYMENTS, payment.id, { confirmedByDoctor: true, confirmedAt: new Date().toISOString() });
+    loadData();
+    toast({ title: 'Recebimento confirmado!', description: 'Você confirmou o recebimento deste pagamento.' });
+  };
+
   const totalPending = payments.filter((p) => p.status === 'pendente' || p.status === 'atrasado').reduce((acc, p) => acc + p.amount, 0);
   const totalPaid = payments.filter((p) => p.status === 'pago').reduce((acc, p) => acc + p.amount, 0);
 
