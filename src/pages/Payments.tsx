@@ -133,11 +133,13 @@ export default function Payments() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Pagamentos</h1>
-            <p className="text-muted-foreground">Acompanhe e gerencie pagamentos</p>
+            <p className="text-muted-foreground">{isDoctor ? 'Seus pagamentos' : 'Acompanhe e gerencie pagamentos'}</p>
           </div>
-          <Button onClick={() => openDialog()} className="w-full sm:w-auto">
-            <Plus className="mr-2 h-4 w-4" />Novo Pagamento
-          </Button>
+          {!isDoctor && (
+            <Button onClick={() => openDialog()} className="w-full sm:w-auto">
+              <Plus className="mr-2 h-4 w-4" />Novo Pagamento
+            </Button>
+          )}
         </div>
 
         {/* Stats */}
