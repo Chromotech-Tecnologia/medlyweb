@@ -9,8 +9,9 @@ describe('exportToCsv', () => {
     vi.spyOn(document, 'createElement').mockReturnValue(mockLink as any);
     vi.spyOn(document.body, 'appendChild').mockImplementation(() => mockLink as any);
     vi.spyOn(document.body, 'removeChild').mockImplementation(() => mockLink as any);
-    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:test');
-    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+    // jsdom doesn't have URL.createObjectURL, so we define it
+    globalThis.URL.createObjectURL = vi.fn(() => 'blob:test');
+    globalThis.URL.revokeObjectURL = vi.fn();
   });
 
   it('does nothing for empty data', () => {
