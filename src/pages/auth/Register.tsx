@@ -104,6 +104,8 @@ export default function Register() {
       email: '',
       phone: '',
       cpf: '',
+      crm: '',
+      crmState: '',
       cep: '',
       street: '',
       number: '',
