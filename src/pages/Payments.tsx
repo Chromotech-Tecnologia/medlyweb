@@ -55,17 +55,21 @@ export default function Payments() {
   };
 
   useEffect(() => {
+    let result = payments;
+    // Doctors see only their payments
+    if (isDoctor && user) {
+      result = result.filter(p => p.doctorId === user.id);
+    }
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      setFilteredPayments(payments.filter((p) => {
+      result = result.filter((p) => {
         const scale = scales.find((s) => s.id === p.scaleId);
         const doctor = doctors.find((d) => d.id === p.doctorId);
         return scale?.title.toLowerCase().includes(term) || doctor?.name.toLowerCase().includes(term);
-      }));
-    } else {
-      setFilteredPayments(payments);
+      });
     }
-  }, [searchTerm, payments, scales, doctors]);
+    setFilteredPayments(result);
+  }, [searchTerm, payments, scales, doctors, isDoctor, user]);
 
   const getScaleTitle = (id: string) => scales.find((s) => s.id === id)?.title || 'N/A';
   const getDoctorName = (id: string) => doctors.find((d) => d.id === id)?.name || 'N/A';
