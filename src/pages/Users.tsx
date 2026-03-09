@@ -225,7 +225,7 @@ export default function Users() {
                     <TableHead>Usuário</TableHead>
                     <TableHead>Perfil</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead className="hidden md:table-cell">Telefone</TableHead>
+                    <TableHead className="hidden md:table-cell">Documentos</TableHead>
                     <TableHead className="hidden lg:table-cell">Avaliação</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
