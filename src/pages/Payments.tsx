@@ -185,7 +185,6 @@ export default function Payments() {
                   <TableHead>Vencimento</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
-                </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredPayments.length === 0 ? (
