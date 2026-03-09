@@ -28,6 +28,8 @@ const statusColors: Record<string, string> = { pendente: 'bg-warning/15 text-war
 const formatCurrency = (value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
 export default function Payments() {
+  const { user } = useAuth();
+  const isDoctor = user?.role === 'medico';
   const [payments, setPayments] = useState<Payment[]>([]);
   const [scales, setScales] = useState<Scale[]>([]);
   const [doctors, setDoctors] = useState<UserProfile[]>([]);
