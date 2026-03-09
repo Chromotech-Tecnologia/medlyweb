@@ -235,6 +235,8 @@ export default function Documents() {
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handlePreview(doc)}><Eye className="mr-2 h-4 w-4" />Visualizar</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleDownload(doc)}><Download className="mr-2 h-4 w-4" />Baixar</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => openDialog(doc)}><Pencil className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>
                             {doc.status === 'pendente' && (
                               <>
