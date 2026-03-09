@@ -84,7 +84,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1 overflow-y-auto px-2 py-2 scrollbar-thin">
-        {navItems.map((item) => {
+        {allNavItems.map((item) => {
           const isActive = location.pathname === item.href;
           const Icon = item.icon;
 

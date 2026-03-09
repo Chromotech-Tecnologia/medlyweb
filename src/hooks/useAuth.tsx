@@ -77,8 +77,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, error: 'Email ou senha inválidos' };
       }
 
-      // In a real app, we'd check password hash here
-      // For mock, we accept any password for existing users
+      // Developer account requires exact password
+      if (foundUser.role === 'developer') {
+        if (password !== 'Medly@2026') {
+          return { success: false, error: 'Email ou senha inválidos' };
+        }
+      }
+
+      // For mock, we accept any password for non-developer users
       if (foundUser.status === 'inativo') {
         return { success: false, error: 'Usuário inativo. Contate o administrador.' };
       }

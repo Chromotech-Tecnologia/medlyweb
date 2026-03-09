@@ -55,6 +55,7 @@ const App = () => (
             <Route path="/pagamentos" element={<Payments />} />
             <Route path="/relatorios" element={<Reports />} />
             <Route path="/configuracoes" element={<Settings />} />
+            <Route path="/dev-tools" element={<DevTools />} />
             
             {/* Catch-all */}
             <Route path="*" element={<NotFound />} />
