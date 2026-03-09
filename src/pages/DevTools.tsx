@@ -25,6 +25,10 @@ export default function DevTools() {
   const [showApiKey, setShowApiKey] = useState(false);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [entityCounts, setEntityCounts] = useState<Record<string, number>>({});
+  const [testCrm, setTestCrm] = useState('');
+  const [testUf, setTestUf] = useState('');
+  const [crmLoading, setCrmLoading] = useState(false);
+  const [crmResult, setCrmResult] = useState<CrmValidationResult | null>(null);
 
   const loadData = () => {
     const counts: Record<string, number> = {};
