@@ -91,6 +91,8 @@ export default function Register() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoadingCep, setIsLoadingCep] = useState(false);
   const [step, setStep] = useState(1);
+  const [crmResult, setCrmResult] = useState<CrmValidationResult | null>(null);
+  const [crmLoading, setCrmLoading] = useState(false);
   const { register, isLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
