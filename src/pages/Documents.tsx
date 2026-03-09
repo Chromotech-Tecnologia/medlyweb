@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   FileText, Upload, Clock, CheckCircle, XCircle, AlertCircle,
-  Plus, Search, MoreHorizontal, Pencil, Trash2, Eye, File, X,
+  Plus, Search, MoreHorizontal, Pencil, Trash2, Eye, File, X, Download,
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
@@ -36,6 +36,8 @@ export default function Documents() {
   const [editingDoc, setEditingDoc] = useState<Document | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [docToDelete, setDocToDelete] = useState<Document | null>(null);
+  const [previewDoc, setPreviewDoc] = useState<Document | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<{ name: string; dataUrl: string } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -133,6 +135,24 @@ export default function Documents() {
     setDeleteDialogOpen(false); setDocToDelete(null);
   };
 
+  const handlePreview = (doc: Document) => { setPreviewDoc(doc); setPreviewOpen(true); };
+
+  const handleDownload = (doc: Document) => {
+    if (!doc.fileUrl || doc.fileUrl === '#mock-file') {
+      toast({ title: 'Sem arquivo', description: 'Este documento não possui arquivo anexado.', variant: 'destructive' });
+      return;
+    }
+    const link = document.createElement('a');
+    link.href = doc.fileUrl;
+    link.download = doc.name || 'documento';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const isImageFile = (url: string) => /^data:image\//i.test(url);
+  const isPdfFile = (url: string) => /^data:application\/pdf/i.test(url);
+
   const pendingCount = documents.filter((d) => d.status === 'pendente').length;
   const approvedCount = documents.filter((d) => d.status === 'aprovado').length;
   const expiringSoon = documents.filter((d) => d.expirationDate && new Date(d.expirationDate) <= new Date(Date.now() + 30 * 86400000)).length;
@@ -215,6 +235,8 @@ export default function Documents() {
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handlePreview(doc)}><Eye className="mr-2 h-4 w-4" />Visualizar</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleDownload(doc)}><Download className="mr-2 h-4 w-4" />Baixar</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => openDialog(doc)}><Pencil className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>
                             {doc.status === 'pendente' && (
                               <>
@@ -326,6 +348,53 @@ export default function Documents() {
             <DialogFooter>
               <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancelar</Button>
               <Button variant="destructive" onClick={confirmDelete}>Excluir</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Preview Dialog */}
+        <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+          <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Eye className="h-5 w-5" />
+                {previewDoc?.name}
+              </DialogTitle>
+              <DialogDescription>
+                {categoryLabels[previewDoc?.category || 'outro']} • {getUserName(previewDoc?.userId || '')}
+                {previewDoc?.expirationDate && ` • Validade: ${previewDoc.expirationDate}`}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              {previewDoc?.fileUrl && previewDoc.fileUrl !== '#mock-file' ? (
+                <div className="rounded-lg border overflow-hidden">
+                  {isImageFile(previewDoc.fileUrl) ? (
+                    <img src={previewDoc.fileUrl} alt={previewDoc.name} className="w-full max-h-[60vh] object-contain bg-muted" />
+                  ) : isPdfFile(previewDoc.fileUrl) ? (
+                    <iframe src={previewDoc.fileUrl} className="w-full h-[60vh]" title={previewDoc.name} />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center gap-3 p-12 text-muted-foreground">
+                      <File className="h-16 w-16" />
+                      <p className="text-sm">Pré-visualização não disponível para este tipo de arquivo.</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center gap-3 rounded-lg border p-12 text-muted-foreground">
+                  <FileText className="h-16 w-16" />
+                  <p className="text-sm">Nenhum arquivo anexado a este documento.</p>
+                </div>
+              )}
+
+              <div className="grid gap-2 rounded-lg border p-4 text-sm">
+                <div className="flex justify-between"><span className="text-muted-foreground">Status</span><Badge variant="outline" className={statusColors[previewDoc?.status || 'pendente']}>{statusLabels[previewDoc?.status || 'pendente']}</Badge></div>
+                {previewDoc?.reviewNotes && <div className="flex justify-between"><span className="text-muted-foreground">Observações</span><span className="text-right max-w-[60%]">{previewDoc.reviewNotes}</span></div>}
+                <div className="flex justify-between"><span className="text-muted-foreground">Criado em</span><span>{previewDoc?.createdAt ? new Date(previewDoc.createdAt).toLocaleDateString('pt-BR') : '—'}</span></div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setPreviewOpen(false)}>Fechar</Button>
+              {previewDoc && <Button onClick={() => handleDownload(previewDoc)} className="gap-2"><Download className="h-4 w-4" />Baixar</Button>}
             </DialogFooter>
           </DialogContent>
         </Dialog>
