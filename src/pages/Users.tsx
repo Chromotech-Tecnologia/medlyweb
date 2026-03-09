@@ -61,6 +61,8 @@ export default function Users() {
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [selectedAvatar, setSelectedAvatar] = useState<string>(getAvatarUrl(0));
   const [customAvatarFile, setCustomAvatarFile] = useState<string | null>(null);
+  const [crmResult, setCrmResult] = useState<CrmValidationResult | null>(null);
+  const [crmLoading, setCrmLoading] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<UserFormData>({
