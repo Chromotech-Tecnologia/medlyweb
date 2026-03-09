@@ -135,6 +135,24 @@ export default function Documents() {
     setDeleteDialogOpen(false); setDocToDelete(null);
   };
 
+  const handlePreview = (doc: Document) => { setPreviewDoc(doc); setPreviewOpen(true); };
+
+  const handleDownload = (doc: Document) => {
+    if (!doc.fileUrl || doc.fileUrl === '#mock-file') {
+      toast({ title: 'Sem arquivo', description: 'Este documento não possui arquivo anexado.', variant: 'destructive' });
+      return;
+    }
+    const link = document.createElement('a');
+    link.href = doc.fileUrl;
+    link.download = doc.name || 'documento';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const isImageFile = (url: string) => /^data:image\//i.test(url);
+  const isPdfFile = (url: string) => /^data:application\/pdf/i.test(url);
+
   const pendingCount = documents.filter((d) => d.status === 'pendente').length;
   const approvedCount = documents.filter((d) => d.status === 'aprovado').length;
   const expiringSoon = documents.filter((d) => d.expirationDate && new Date(d.expirationDate) <= new Date(Date.now() + 30 * 86400000)).length;
