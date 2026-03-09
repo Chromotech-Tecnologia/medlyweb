@@ -58,6 +58,8 @@ export const registerSchema = z.object({
     .string()
     .min(1, 'CPF é obrigatório')
     .refine(isValidCPF, 'CPF inválido'),
+  crm: z.string().min(1, 'CRM é obrigatório'),
+  crmState: z.string().min(1, 'UF do CRM é obrigatória').length(2, 'Use a sigla do estado'),
   cep: z
     .string()
     .min(1, 'CEP é obrigatório')

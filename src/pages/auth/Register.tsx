@@ -14,7 +14,11 @@ import {
   Loader2,
   CheckCircle,
   CreditCard,
+  ShieldCheck,
+  ShieldAlert,
+  Stethoscope,
 } from 'lucide-react';
+import { validateCrm, type CrmValidationResult } from '@/lib/mocks/crmApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -87,6 +91,8 @@ export default function Register() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoadingCep, setIsLoadingCep] = useState(false);
   const [step, setStep] = useState(1);
+  const [crmResult, setCrmResult] = useState<CrmValidationResult | null>(null);
+  const [crmLoading, setCrmLoading] = useState(false);
   const { register, isLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -98,6 +104,8 @@ export default function Register() {
       email: '',
       phone: '',
       cpf: '',
+      crm: '',
+      crmState: '',
       cep: '',
       street: '',
       number: '',
@@ -167,7 +175,7 @@ export default function Register() {
     let fieldsToValidate: (keyof RegisterFormData)[] = [];
     
     if (step === 1) {
-      fieldsToValidate = ['name', 'email', 'phone', 'cpf'];
+      fieldsToValidate = ['name', 'email', 'phone', 'cpf', 'crm', 'crmState'];
     } else if (step === 2) {
       fieldsToValidate = ['cep', 'street', 'number', 'neighborhood', 'city', 'state'];
     }
@@ -327,6 +335,79 @@ export default function Register() {
                         )}
                       />
                     </div>
+
+                    {/* CRM Fields */}
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <FormField
+                        control={form.control}
+                        name="crm"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>CRM</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Stethoscope className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                <Input {...field} placeholder="123456" className="pl-10" />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="crmState"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>UF do CRM</FormLabel>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                placeholder="SP"
+                                maxLength={2}
+                                className="uppercase"
+                                onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={crmLoading || !form.watch('crm') || !form.watch('crmState')}
+                      onClick={async () => {
+                        setCrmLoading(true);
+                        setCrmResult(null);
+                        const result = await validateCrm(form.getValues('crm'), form.getValues('crmState'));
+                        setCrmResult(result);
+                        setCrmLoading(false);
+                      }}
+                      className="gap-2 w-full"
+                    >
+                      {crmLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+                      Validar CRM
+                    </Button>
+
+                    {crmResult && (
+                      <div className={`rounded-lg border p-3 text-sm space-y-1 ${crmResult.status === 'ativo' ? 'border-success/30 bg-success/5' : 'border-destructive/30 bg-destructive/5'}`}>
+                        <div className="flex items-center gap-2 font-medium">
+                          {crmResult.status === 'ativo' ? <ShieldCheck className="h-4 w-4 text-success" /> : <ShieldAlert className="h-4 w-4 text-destructive" />}
+                          CRM {crmResult.crm}/{crmResult.uf} — {crmResult.status?.toUpperCase()}
+                        </div>
+                        {crmResult.name && <p>Nome: {crmResult.name}</p>}
+                        {crmResult.situation && <p>Situação: {crmResult.situation}</p>}
+                        {crmResult.specialties && crmResult.specialties.length > 0 && (
+                          <p>Especialidades: {crmResult.specialties.join(', ')}</p>
+                        )}
+                        {crmResult.registrationDate && <p>Inscrição: {crmResult.registrationDate}</p>}
+                        {crmResult.error && <p className="text-destructive">{crmResult.error}</p>}
+                      </div>
+                    )}
                   </motion.div>
                 )}
 
