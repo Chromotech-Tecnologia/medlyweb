@@ -97,7 +97,7 @@ export function DashboardContent() {
       </motion.div>
 
       {/* 3 Charts */}
-      <motion.div variants={itemVariants} className="grid gap-6 lg:grid-cols-3">
+      <motion.div variants={itemVariants} className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {/* Users by Role Pie Chart */}
         <Card className="glass-card">
           <CardHeader>

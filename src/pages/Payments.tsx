@@ -174,59 +174,92 @@ export default function Payments() {
         <Card className="glass-card">
           <CardHeader><CardTitle className="text-lg">Pagamentos ({filteredPayments.length})</CardTitle></CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                 <TableRow>
-                  <TableHead>Escala</TableHead>
-                  {!isDoctor && <TableHead>Médico</TableHead>}
-                  <TableHead>Valor</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Confirmação</TableHead>
-                  <TableHead>Vencimento</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredPayments.length === 0 ? (
-                  <TableRow><TableCell colSpan={isDoctor ? 7 : 8} className="text-center text-muted-foreground py-8">Nenhum pagamento encontrado.</TableCell></TableRow>
-                ) : filteredPayments.map((payment) => (
-                  <TableRow key={payment.id} className="group">
-                    <TableCell><div className="flex items-center gap-2"><DollarSign className="h-4 w-4 text-muted-foreground" /><span className="font-medium">{getScaleTitle(payment.scaleId)}</span></div></TableCell>
-                    {!isDoctor && <TableCell className="text-sm">{getDoctorName(payment.doctorId)}</TableCell>}
-                    <TableCell className="font-medium">{formatCurrency(payment.amount)}</TableCell>
-                    <TableCell><Badge variant="outline" className={statusColors[payment.status]}>{statusLabels[payment.status]}</Badge></TableCell>
-                    <TableCell>
-                      {payment.confirmedByDoctor ? (
-                        <Badge variant="outline" className="bg-success/15 text-success border-success/30 gap-1">
-                          <ThumbsUp className="h-3 w-3" />Confirmado
-                        </Badge>
-                      ) : payment.status === 'pago' ? (
-                        isDoctor ? (
-                          <Button size="sm" variant="outline" className="gap-1 text-xs h-7" onClick={() => handleConfirmReceipt(payment)}>
-                            <ThumbsUp className="h-3 w-3" />Confirmar
-                          </Button>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">Aguardando médico</span>
-                        )
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell>{payment.dueDate}</TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          {!isDoctor && <DropdownMenuItem onClick={() => openDialog(payment)}><Pencil className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>}
-                          {payment.status !== 'pago' && <DropdownMenuItem onClick={() => handleMarkPaid(payment)}><CheckCircle className="mr-2 h-4 w-4" />Marcar como Pago</DropdownMenuItem>}
-                          <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(payment)}><Trash2 className="mr-2 h-4 w-4" />Excluir</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+            {/* Desktop Table */}
+            <div className="hidden md:block">
+              <Table>
+                <TableHeader>
+                   <TableRow>
+                    <TableHead>Escala</TableHead>
+                    {!isDoctor && <TableHead>Médico</TableHead>}
+                    <TableHead>Valor</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Confirmação</TableHead>
+                    <TableHead>Vencimento</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredPayments.length === 0 ? (
+                    <TableRow><TableCell colSpan={isDoctor ? 6 : 7} className="text-center text-muted-foreground py-8">Nenhum pagamento encontrado.</TableCell></TableRow>
+                  ) : filteredPayments.map((payment) => (
+                    <TableRow key={payment.id} className="group">
+                      <TableCell><div className="flex items-center gap-2"><DollarSign className="h-4 w-4 text-muted-foreground" /><span className="font-medium">{getScaleTitle(payment.scaleId)}</span></div></TableCell>
+                      {!isDoctor && <TableCell className="text-sm">{getDoctorName(payment.doctorId)}</TableCell>}
+                      <TableCell className="font-medium">{formatCurrency(payment.amount)}</TableCell>
+                      <TableCell><Badge variant="outline" className={statusColors[payment.status]}>{statusLabels[payment.status]}</Badge></TableCell>
+                      <TableCell>
+                        {payment.confirmedByDoctor ? (
+                          <Badge variant="outline" className="bg-success/15 text-success border-success/30 gap-1"><ThumbsUp className="h-3 w-3" />Confirmado</Badge>
+                        ) : payment.status === 'pago' ? (
+                          isDoctor ? (
+                            <Button size="sm" variant="outline" className="gap-1 text-xs h-7" onClick={() => handleConfirmReceipt(payment)}><ThumbsUp className="h-3 w-3" />Confirmar</Button>
+                          ) : (<span className="text-xs text-muted-foreground">Aguardando médico</span>)
+                        ) : (<span className="text-xs text-muted-foreground">—</span>)}
+                      </TableCell>
+                      <TableCell>{payment.dueDate}</TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {!isDoctor && <DropdownMenuItem onClick={() => openDialog(payment)}><Pencil className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>}
+                            {payment.status !== 'pago' && <DropdownMenuItem onClick={() => handleMarkPaid(payment)}><CheckCircle className="mr-2 h-4 w-4" />Marcar como Pago</DropdownMenuItem>}
+                            <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(payment)}><Trash2 className="mr-2 h-4 w-4" />Excluir</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Mobile Cards */}
+            <div className="md:hidden space-y-3">
+              {filteredPayments.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">Nenhum pagamento encontrado.</p>
+              ) : filteredPayments.map((payment) => (
+                <div key={payment.id} className="rounded-lg border p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium text-sm">{getScaleTitle(payment.scaleId)}</span>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {!isDoctor && <DropdownMenuItem onClick={() => openDialog(payment)}><Pencil className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>}
+                        {payment.status !== 'pago' && <DropdownMenuItem onClick={() => handleMarkPaid(payment)}><CheckCircle className="mr-2 h-4 w-4" />Marcar como Pago</DropdownMenuItem>}
+                        <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(payment)}><Trash2 className="mr-2 h-4 w-4" />Excluir</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                  {!isDoctor && <p className="text-sm text-muted-foreground">{getDoctorName(payment.doctorId)}</p>}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-bold">{formatCurrency(payment.amount)}</span>
+                    <Badge variant="outline" className={statusColors[payment.status]}>{statusLabels[payment.status]}</Badge>
+                    {payment.confirmedByDoctor && (
+                      <Badge variant="outline" className="bg-success/15 text-success border-success/30 gap-1"><ThumbsUp className="h-3 w-3" />Confirmado</Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>Vence: {payment.dueDate}</span>
+                    {payment.status === 'pago' && !payment.confirmedByDoctor && isDoctor && (
+                      <Button size="sm" variant="outline" className="gap-1 text-xs h-7" onClick={() => handleConfirmReceipt(payment)}><ThumbsUp className="h-3 w-3" />Confirmar</Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
 

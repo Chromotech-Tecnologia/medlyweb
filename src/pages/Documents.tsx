@@ -306,84 +306,118 @@ export default function Documents() {
         <Card className="glass-card">
           <CardHeader><CardTitle className="text-lg">Documentos ({filteredDocs.length})</CardTitle></CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Documento</TableHead>
-                  <TableHead>Usuário</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Validade</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredDocs.length === 0 ? (
-                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                    {isDoctor ? 'Você ainda não enviou documentos.' : 'Nenhum documento encontrado.'}
-                  </TableCell></TableRow>
-                ) : filteredDocs.map((doc) => {
-                  const StatusIcon = statusIcons[doc.status];
-                  return (
-                    <TableRow key={doc.id} className="group">
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          {doc.fileUrl && doc.fileUrl !== '#mock-file' && isImageFile(doc.fileUrl) ? (
-                            <div className="h-10 w-10 shrink-0 rounded-md border overflow-hidden bg-muted">
-                              <img src={doc.fileUrl} alt={doc.name} className="h-full w-full object-cover" />
+            {/* Desktop Table */}
+            <div className="hidden md:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Documento</TableHead>
+                    <TableHead>Usuário</TableHead>
+                    <TableHead>Categoria</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Validade</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredDocs.length === 0 ? (
+                    <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                      {isDoctor ? 'Você ainda não enviou documentos.' : 'Nenhum documento encontrado.'}
+                    </TableCell></TableRow>
+                  ) : filteredDocs.map((doc) => {
+                    const StatusIcon = statusIcons[doc.status];
+                    return (
+                      <TableRow key={doc.id} className="group">
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            {doc.fileUrl && doc.fileUrl !== '#mock-file' && isImageFile(doc.fileUrl) ? (
+                              <div className="h-10 w-10 shrink-0 rounded-md border overflow-hidden bg-muted"><img src={doc.fileUrl} alt={doc.name} className="h-full w-full object-cover" /></div>
+                            ) : doc.fileUrl && doc.fileUrl !== '#mock-file' && isPdfFile(doc.fileUrl) ? (
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border bg-destructive/5"><FileText className="h-5 w-5 text-destructive" /></div>
+                            ) : (
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border bg-muted"><File className="h-5 w-5 text-muted-foreground" /></div>
+                            )}
+                            <div>
+                              <span className="font-medium">{doc.name}</span>
+                              {doc.fileUrl && doc.fileUrl !== '#mock-file' && <p className="text-xs text-muted-foreground">Arquivo anexado</p>}
                             </div>
-                          ) : doc.fileUrl && doc.fileUrl !== '#mock-file' && isPdfFile(doc.fileUrl) ? (
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border bg-destructive/5">
-                              <FileText className="h-5 w-5 text-destructive" />
-                            </div>
-                          ) : (
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border bg-muted">
-                              <File className="h-5 w-5 text-muted-foreground" />
-                            </div>
-                          )}
-                          <div>
-                            <span className="font-medium">{doc.name}</span>
-                            {doc.fileUrl && doc.fileUrl !== '#mock-file' && <p className="text-xs text-muted-foreground">Arquivo anexado</p>}
                           </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {(() => { const u = getUser(doc.userId); return u ? (
-                            <><Avatar className="h-6 w-6"><AvatarImage src={u.avatarUrl} /><AvatarFallback className="text-xs">{u.name.charAt(0)}</AvatarFallback></Avatar>
-                            <span className="text-sm">{u.name}</span></>
-                          ) : <span className="text-sm text-muted-foreground">N/A</span>; })()}
-                        </div>
-                      </TableCell>
-                      <TableCell><Badge variant="secondary">{categoryLabels[doc.category]}</Badge></TableCell>
-                      <TableCell><Badge variant="outline" className={statusColors[doc.status]}><StatusIcon className="mr-1 h-3 w-3" />{statusLabels[doc.status]}</Badge></TableCell>
-                      <TableCell>{doc.expirationDate || '—'}</TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handlePreview(doc)}><Eye className="mr-2 h-4 w-4" />Visualizar</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDownload(doc)}><Download className="mr-2 h-4 w-4" />Baixar</DropdownMenuItem>
-                            {canEdit && (
-                              <DropdownMenuItem onClick={() => openDialog(doc)}><Pencil className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>
-                            )}
-                            {canApprove && doc.status === 'pendente' && (
-                              <>
-                                <DropdownMenuItem onClick={() => handleStatusChange(doc, 'aprovado')}><CheckCircle className="mr-2 h-4 w-4" />Aprovar</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleStatusChange(doc, 'rejeitado')}><XCircle className="mr-2 h-4 w-4" />Rejeitar</DropdownMenuItem>
-                              </>
-                            )}
-                            {canEdit && (
-                              <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(doc)}><Trash2 className="mr-2 h-4 w-4" />Excluir</DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {(() => { const u = getUser(doc.userId); return u ? (
+                              <><Avatar className="h-6 w-6"><AvatarImage src={u.avatarUrl} /><AvatarFallback className="text-xs">{u.name.charAt(0)}</AvatarFallback></Avatar>
+                              <span className="text-sm">{u.name}</span></>
+                            ) : <span className="text-sm text-muted-foreground">N/A</span>; })()}
+                          </div>
+                        </TableCell>
+                        <TableCell><Badge variant="secondary">{categoryLabels[doc.category]}</Badge></TableCell>
+                        <TableCell><Badge variant="outline" className={statusColors[doc.status]}><StatusIcon className="mr-1 h-3 w-3" />{statusLabels[doc.status]}</Badge></TableCell>
+                        <TableCell>{doc.expirationDate || '—'}</TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handlePreview(doc)}><Eye className="mr-2 h-4 w-4" />Visualizar</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleDownload(doc)}><Download className="mr-2 h-4 w-4" />Baixar</DropdownMenuItem>
+                              {canEdit && <DropdownMenuItem onClick={() => openDialog(doc)}><Pencil className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>}
+                              {canApprove && doc.status === 'pendente' && (
+                                <>
+                                  <DropdownMenuItem onClick={() => handleStatusChange(doc, 'aprovado')}><CheckCircle className="mr-2 h-4 w-4" />Aprovar</DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleStatusChange(doc, 'rejeitado')}><XCircle className="mr-2 h-4 w-4" />Rejeitar</DropdownMenuItem>
+                                </>
+                              )}
+                              {canEdit && <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(doc)}><Trash2 className="mr-2 h-4 w-4" />Excluir</DropdownMenuItem>}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Mobile Cards */}
+            <div className="md:hidden space-y-3">
+              {filteredDocs.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">{isDoctor ? 'Você ainda não enviou documentos.' : 'Nenhum documento encontrado.'}</p>
+              ) : filteredDocs.map((doc) => {
+                const StatusIcon = statusIcons[doc.status];
+                const u = getUser(doc.userId);
+                return (
+                  <div key={doc.id} className="rounded-lg border p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <File className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium text-sm">{doc.name}</span>
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handlePreview(doc)}><Eye className="mr-2 h-4 w-4" />Visualizar</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDownload(doc)}><Download className="mr-2 h-4 w-4" />Baixar</DropdownMenuItem>
+                          {canEdit && <DropdownMenuItem onClick={() => openDialog(doc)}><Pencil className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>}
+                          {canApprove && doc.status === 'pendente' && (
+                            <>
+                              <DropdownMenuItem onClick={() => handleStatusChange(doc, 'aprovado')}><CheckCircle className="mr-2 h-4 w-4" />Aprovar</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleStatusChange(doc, 'rejeitado')}><XCircle className="mr-2 h-4 w-4" />Rejeitar</DropdownMenuItem>
+                            </>
+                          )}
+                          {canEdit && <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(doc)}><Trash2 className="mr-2 h-4 w-4" />Excluir</DropdownMenuItem>}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                    {u && <p className="text-xs text-muted-foreground">{u.name}</p>}
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant="secondary">{categoryLabels[doc.category]}</Badge>
+                      <Badge variant="outline" className={statusColors[doc.status]}><StatusIcon className="mr-1 h-3 w-3" />{statusLabels[doc.status]}</Badge>
+                      {doc.expirationDate && <span className="text-xs text-muted-foreground">Vence: {doc.expirationDate}</span>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </CardContent>
         </Card>
 

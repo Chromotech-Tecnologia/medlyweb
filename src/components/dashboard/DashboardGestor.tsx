@@ -98,7 +98,7 @@ export function DashboardGestor() {
       </motion.div>
 
       {/* 5 Charts - Row 1 (3) */}
-      <motion.div variants={itemVariants} className="grid gap-6 lg:grid-cols-3">
+      <motion.div variants={itemVariants} className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {/* Scales by Status */}
         <Card className="glass-card">
           <CardHeader>
