@@ -14,7 +14,11 @@ import {
   Loader2,
   CheckCircle,
   CreditCard,
+  ShieldCheck,
+  ShieldAlert,
+  Stethoscope,
 } from 'lucide-react';
+import { validateCrm, type CrmValidationResult } from '@/lib/mocks/crmApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
